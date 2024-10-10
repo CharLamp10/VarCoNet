@@ -47,27 +47,6 @@ class ConvKRegion(nn.Module):
             nn.LeakyReLU(negative_slope=0.2),
             Linear(32, out_size)
         )
-        #self.conv1 = Conv1d(in_channels=k, out_channels=32,
-        #                    kernel_size=kernel_size, stride=2)
-        #output_dim_1 = (time_series-kernel_size)//2+1
-        
-        
-        #self.conv2 = Conv1d(in_channels=32, out_channels=16,
-        #                    kernel_size=8)
-        #output_dim_2 = output_dim_1 - 8 + 1
-        
-        #self.max_pool1 = MaxPool1d(pool_size)
-        #output_dim_3 = output_dim_2 // pool_size * 16
-        
-        #self.in0 = nn.InstanceNorm1d(time_series)
-        #self.in1 = nn.BatchNorm1d(32)
-        #self.in2 = nn.BatchNorm1d(16)
-
-        #self.linear = nn.Sequential(
-        #    Linear(output_dim_3, 32),
-        #    nn.LeakyReLU(negative_slope=0.2),
-        #    Linear(32, out_size)
-        #)
 
     def forward(self, x):
 
@@ -99,119 +78,19 @@ class ConvKRegion(nn.Module):
 
         return x
 
-class GruKRegion(nn.Module):
-
-    def __init__(self, kernel_size=8, layers=4, out_size=8, dropout=0.5):
-        super().__init__()
-        self.gru = GRU(1, kernel_size, layers,
-                       bidirectional=True, batch_first=True)
-
-        self.kernel_size = kernel_size
-
-        self.linear = nn.Sequential(
-            nn.Dropout(dropout),
-            Linear(kernel_size*2, kernel_size),
-            nn.LeakyReLU(negative_slope=0.2),
-            Linear(kernel_size, out_size)
-        )
-
-    def forward(self, raw):
-
-        raw = torch.transpose(raw, 1, 2)
-        b, k, d = raw.shape
-
-        x = raw.contiguous().view((b*k, 1, d))
-        zero_mask = (x == 0)
-        lengths = zero_mask.squeeze(1).float().argmax(dim=1)
-        no_padding = ~zero_mask.squeeze(1).any(dim=1)
-        lengths[no_padding] = d
-        x = torch.transpose(x, 1, 2)
-        x = pack_padded_sequence(x, lengths.cpu(), batch_first=True, enforce_sorted=False)
-        x, h = self.gru(x)
-        x, _ = pad_packed_sequence(x, batch_first=True)
-        all_zeros = (x == 0).all(dim=-1)
-        if not all_zeros.any():
-            x = x[:,-1,:]
-        else:
-            last_non_zero_pos = all_zeros.float().argmax(dim=1)
-            x = x[torch.arange(x.size(0)),last_non_zero_pos-1,:]
-
-        x = x.view((b, k, -1))
-
-        x = self.linear(x)
-        return x
-
-
-class PositionalEncoding(nn.Module):
-    def __init__(self, d_model, max_seq_length = 180):
-        super(PositionalEncoding, self).__init__()
-        
-        pe = torch.zeros(max_seq_length, d_model)
-        position = torch.arange(0, max_seq_length, dtype=torch.float).unsqueeze(1)
-        div_term = torch.exp(torch.arange(0, d_model, 2).float() * -(math.log(10000.0) / d_model))
-        
-        pe[:, 0::2] = torch.sin(position * div_term)
-        pe[:, 1::2] = torch.cos(position * div_term)
-        
-        self.register_buffer('pe', pe.unsqueeze(0))
-        
-    def forward(self, x):
-        return x + self.pe[:, :x.size(1)]
-
-def create_padding_mask(self, sequences, pad_token=0):
-    # Create a mask where padding tokens (zeros) are True (to be masked)
-    mask = (sequences == pad_token).transpose(0, 1)
-    return mask
-
-class Transformer(nn.Module):
-    def __init__(self, out_size=128, d_model=384, n_layers=1, n_heads=8, dim_feedforward=2048, dropout=0.1, max_len=180):
-        super(Transformer, self).__init__()
-        self.d_model = d_model
-
-        # Transformer layers
-        encoder_layer = nn.TransformerEncoderLayer(d_model, n_heads, dim_feedforward, dropout, batch_first = True)
-        self.transformer_encoder = nn.TransformerEncoder(encoder_layer, n_layers)
-        self.pos_enc = PositionalEncoding(d_model,max_len)
-        # Output layer
-        self.fc_out = nn.Linear(max_len, out_size)
-        
-        self.dropout = nn.Dropout(dropout)
-
-
-    def forward(self, x, x_mask=None):       
-        x_mask = (x[:, :, 0] == 0)      
-        x = self.pos_enc(x)
-        x = self.transformer_encoder(x, src_key_padding_mask=x_mask)     
-        x = torch.transpose(x, 1, 2)
-        x = self.fc_out(x)
-        return x
-
 
 class SeqenceModel(nn.Module):
 
     def __init__(self, model_config, roi_num=384, time_series=180):
         super().__init__()
 
-        if model_config['extractor_type'] == 'cnn':
-            self.extract = ConvKRegion(
-                out_size=model_config['embedding_size'], kernel_size=model_config['window_size'],
-                time_series=time_series, pool_size=model_config['pool_size'])
-        elif model_config['extractor_type'] == 'gru':
-            self.extract = GruKRegion(
-                out_size=model_config['embedding_size'], kernel_size=model_config['hidden_size'],
-                layers=model_config['num_gru_layers'], dropout=model_config['dropout'])
-        elif model_config['extractor_type'] == 'transformer':
-            self.extract = Transformer(
-                out_size=model_config['embedding_size'], d_model=model_config['d_model'],
-                n_layers=model_config['num_tr_layers'],n_heads=model_config['num_heads'],
-                dim_feedforward=model_config['dim_feedforward'],dropout=model_config['dropout'])
-
+        self.extract = ConvKRegion(
+            out_size=model_config['embedding_size'], kernel_size=model_config['window_size'],
+            time_series=time_series, pool_size=model_config['pool_size'])
 
     def forward(self, x):
         x = self.extract(x)
         x = upper_triangular_cosine_similarity(x)
-        #mask = F.gumbel_softmax(x, tau=1, hard=False)
-        #x = x*mask
         return x
 
 def upper_triangular_cosine_similarity(x):
@@ -245,20 +124,6 @@ def removeDuplicates(names,inds):
             inds[pos_name] = possible_pos[random.randint(0,len(possible_pos)-1)]
             non_common = list(set(non_common).symmetric_difference(set(names_batch)))
         return inds
-
-def generate_random_odd_numbers(n, a, b):
-    # Ensure a is odd; if not, adjust it
-    if a % 2 == 0:
-        a += 1  # Make a odd
-    # Ensure b is odd; if not, adjust it
-    if b % 2 == 0:
-        b -= 1  # Make b odd
-
-    # Generate a list of odd numbers between a and b
-    odd_numbers = list(range(a, b + 1, 2))  # Step by 2 to get only odd numbers
-
-    # Randomly select n odd numbers (with replacement)
-    return [random.choice(odd_numbers) for _ in range(n)]
 
 def generate_random_numbers_with_distance(n, a, d):
     r = np.array([random.randint(0,d) for _ in range(n)])
@@ -410,39 +275,25 @@ for key in data:
 device = torch.device("cuda:3") if torch.cuda.is_available() else torch.device("cpu")
 batch_size = 128
 shuffle = True
+tau = 0.07
+epochs = 300
+lr = 0.005
+eval_epochs = [1,5,10,20,50,75,100,125,150,175,200,225,250,275,300]
+save_models = True
+save_results = True
+
+model_config = {}
+model_config['embedding_size'] = 128
+model_config['window_size'] = 32
+model_config['pool_size'] = 4
 
 MA_loader = DataLoader(MA, batch_size=batch_size, shuffle = shuffle)
 SA_loader = DataLoader(SA, batch_size=batch_size, shuffle = shuffle)
 
-model_config = {}
-model_config['extractor_type'] = 'cnn'
-model_config['embedding_size'] = 128  #all
-
-#model_config['d_model'] = 384         #transformer
-#model_config['num_tr_layers'] = 2     #transformer
-#model_config['num_heads'] = 16        #transformer
-#model_config['dim_feedforward'] = 512 #transformer
-#model_config['dropout'] = 0.5         #transformer
-
-if model_config['extractor_type'] == 'cnn':
-    tau = 0.07
-    epochs = 300
-    eval_epochs = [1,5,10,20,50,75,100,125,150,175,200,225,250,275,300]
-    model_config['window_size'] = 32      #cnn
-    model_config['pool_size'] = 4         #cnn
-    
-elif model_config['extractor_type'] == 'gru':
-    tau = 0.1
-    epochs = 200
-    eval_epochs = [1,5,10,20,50,100,110,120,130,140,150,160,170,180,190,200]  
-    model_config['hidden_size'] = 16      #gru
-    model_config['num_gru_layers'] = 2    #gru
-    model_config['dropout'] = 0.5         #gru
-
 encoder_model = SeqenceModel(model_config, 384, 180).to(device)
 contrast_model = DualBranchContrast(loss=InfoNCE(tau=tau),mode='L2L').to(device)
     
-optimizer = Adam(encoder_model.parameters(), lr=0.005)
+optimizer = Adam(encoder_model.parameters(), lr=lr)
 scheduler = LinearWarmupCosineAnnealingLR(
     optimizer=optimizer,
     warmup_epochs=100,
@@ -454,24 +305,8 @@ test_result = []
 losses = []
 with tqdm(total=epochs, desc='(T)') as pbar:
     for epoch in range(1,epochs+1):
-        # Iterate over the data loader
         total_loss = 0.0
-        batch_count = 0
-        #for batch_idx, sample_inds in enumerate(SA_loader.batch_sampler): #Choose one SA and the next (neighboring) one
-        #    sample_inds = removeDuplicates(names,sample_inds)
-        #    batch_list = [SA[i] for i in sample_inds]
-        #    batch_loader = DataLoader(SA, batch_size=len(batch_list))
-        #    batch_data = next(iter(batch_loader))
-        #    random_inds = generate_random_odd_numbers(len(batch_list),0,batch_data.shape[1]-2)
-        #    batch_data1 = batch_data[np.arange(len(batch_list)), random_inds]
-        #    random_inds = [x + 1 for x in random_inds]
-        #    batch_data2 = batch_data[np.arange(len(batch_list)), random_inds]
-        #    loss,input_dim = train(batch_data1.to(device), batch_data2.to(device), encoder_model, contrast_model, optimizer)
-        #    scheduler.step()
-        #    total_loss += loss
-        #    batch_count += 1
-                
-                
+        batch_count = 0                              
         for batch_idx, (sample_inds_sa, sample_inds_ma) in enumerate(zip(SA_loader.batch_sampler, MA_loader.batch_sampler)):
             sample_inds_sa = removeDuplicates(names,sample_inds_sa)
             batch_list = [SA[i] for i in sample_inds_sa]
@@ -514,14 +349,16 @@ with tqdm(total=epochs, desc='(T)') as pbar:
 
 encoder_model.load_state_dict(min_loss_model)
 test_result.append(test(encoder_model, test_data1, test_data2, batch_size,device))
-                
-torch.save(min_loss_model, 'min_loss_model_' + model_config['extractor_type'] + '.pth')
-torch.save(max_acc_model, 'max_acc_model_' + model_config['extractor_type'] +'.pth')
-with open('losses_' + model_config['extractor_type'] + '.txt', 'w') as f:
-    for loss in losses:
-        f.write(f"{loss}\n")
-with open('test_results_' + model_config['extractor_type'] + '.pkl', 'wb') as f:
-    pickle.dump(test_result,f)
+
+if save_models:                
+    torch.save(min_loss_model, os.path.join('models','min_loss_model.pth'))
+    torch.save(max_acc_model, os.path.join('models','max_acc_model.pth'))
+if save_results:
+    with open(os.path.join('results','losses.txt'), 'w') as f:
+        for loss in losses:
+            f.write(f"{loss}\n")
+    with open(os.path.join('results','test_results.pkl'), 'wb') as f:
+        pickle.dump(test_result,f)
 
 
 #if __name__ == '__main__':

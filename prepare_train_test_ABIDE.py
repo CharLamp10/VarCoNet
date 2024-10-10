@@ -2,6 +2,7 @@ import numpy as np
 import os
 from random import sample,randint,choices
 from scipy.signal import resample
+import pandas as pd
 
 
 def resample_signal(signal,name):
@@ -38,21 +39,32 @@ def resample_signal(signal,name):
     return signal
 
 
+wind_size_max = 393
 path_data = r'G:\ABIDE_ADHD_AAL\ABIDEI\dparsf_cc400\filt_noglobal\rois_cc400'
 save_path = r'C:\Users\100063082\Desktop\SSL_FC_matrix_data'
+path_phenotypic = r'G:\ABIDE_ADHD_AAL\ABIDEI\Phenotypic_V1_0b.csv'
+
 data_dir = os.listdir(path_data)
 if 'cc400' in path_data:
     rois = 392
 elif 'cc200' in path_data:
     rois = 200
 
-train = sample(data_dir, 775) #760 for cpac_cc200, 748 for cpac_cc400, 784 for dparsf_cc200, 775 for dparsf_cc400
-test = [item for item in data_dir if item not in train]
-train_names = []
-test_names = []
 
-Time_train = []
-for data in train:
+phenotypic = pd.read_csv(path_phenotypic)
+sub_id = phenotypic['SUB_ID'].values
+group = phenotypic['DX_GROUP'].values
+group[group == 2] = 0
+
+names = []
+Times = []
+classes = []
+for data in data_dir:
+    pos00 = data.find('00')
+    ID = data[pos00+2:-14]
+    pos_id = np.where(sub_id == int(ID))[0]
+    if len(pos_id) != 1:
+        raise TypeError("ID false identification")
     feature_dir = os.path.join(path_data, data)
     feature = []
     i = 0
@@ -65,51 +77,37 @@ for data in train:
     feature = np.array(feature)
     if feature.shape[0] <= 295 and feature.shape[0] > 100:
         if not np.any(np.all(feature == 0, axis=0)):
-            feature = resample_signal(feature, data)
-            Time_train.append(feature)
-            train_names.append(data)
+            classes.append(group[pos_id[0]])
+            feature = resample_signal(feature, data)          
+            Times.append(feature)
+            names.append(data)
 
-Time_test = []
-for data in test:
-    feature_dir = os.path.join(path_data, data)
-    feature = []
-    i = 0
-    for line in open(feature_dir, "r"):
-        if i == 0:
-            i += 1
-            continue
-        temp = line[:-1].split('\t')
-        feature.append([float(x) for x in temp])
-    feature_padded = np.zeros((393,rois))
-    feature = np.array(feature)
-    if feature.shape[0] <= 295 and feature.shape[0] > 100:
-        if not np.any(np.all(feature == 0, axis=0)):
-            feature = resample_signal(feature, data)
-            feature_padded[0:len(feature),:] = feature
-            Time_test.append(feature_padded)
-            test_names.append(data)
-    
-lens = []
-for t in Time_train:
-    lens.append(t.shape[0])
-lens = np.array(lens)
-indices_to_delete = np.where((lens < 193) | (lens > 393))[0]
-Time_train_new = [item for idx, item in enumerate(Time_train) if idx not in indices_to_delete]
-train_new = [item for idx, item in enumerate(train_names) if idx not in indices_to_delete]
-    
-lens = []
-for t in Time_test:
-    lens.append(t.shape[0])
-lens = np.array(lens)
-indices_to_delete = np.where((lens < 193) | (lens > 393))[0]
-Time_test_new = [item for idx, item in enumerate(Time_test) if idx not in indices_to_delete]
-test_new = [item for idx, item in enumerate(test_names) if idx not in indices_to_delete]
-    
+ASD_inds = np.where(np.array(classes) == 1)[0]
+NC_inds = np.where(np.array(classes) == 0)[0]              
+test_inds = list(ASD_inds[sample(range(len(ASD_inds)), 50)]) + list(NC_inds[sample(range(len(NC_inds)), 50)])
+test = [data_dir[i] for i in test_inds]
+train_inds = [item for item in range(len(Times)) if item not in test_inds]
+train = [item for item in data_dir if item not in test]
+Time_train = [Times[i] for i in train_inds]
+Time_test = [Times[i] for i in test_inds]
+class_train = [classes[i] for i in train_inds]
+class_test = [classes[i] for i in test_inds]
 
-wind_size_max = 393
+Time_test_new = []
+for data in Time_test:
+    feature_padded = np.zeros((wind_size_max,rois))
+    feature_padded[0:data.shape[0],:] = data
+    Time_test_new.append(feature_padded)
+    
+Time_train_new = []
+for data in Time_train:
+    feature_padded = np.zeros((wind_size_max,rois))
+    feature_padded[0:data.shape[0],:] = data
+    Time_train_new.append(feature_padded)
+
 """ S-A"""
 random_list_SA = []
-for x in Time_train_new:
+for x in Time_train:
     windowsize = int(x.shape[0]/3)
     strite = int(windowsize/2)
     t = 20
@@ -133,8 +131,8 @@ for x in Time_train_new:
 random_list_MA = []
 window_point_Time = []
 t = 20
-for x in Time_train_new:
-    windowsize =[int(x.shape[0]/5),int(x.shape[0]/4),int(x.shape[0]/3),int(x.shape[0]/2),x.shape[0]]
+for x in Time_train:
+    windowsize = [int(x.shape[0]/5),int(x.shape[0]/4),int(x.shape[0]/3),int(x.shape[0]/2),x.shape[0]]
     point_Time = []
     for size in windowsize:
         strite = int(size/2)+1
@@ -164,8 +162,8 @@ for x in Time_train_new:
             point_Time.append(window_point)
     window_point_Time.append(point_Time)
 
-for j,x in enumerate(Time_train_new):
-    windowsize =[int(x.shape[0]/5),int(x.shape[0]/4),int(x.shape[0]/3),int(x.shape[0]/2),x.shape[0]]
+for j,x in enumerate(Time_train):
+    windowsize = [int(x.shape[0]/5),int(x.shape[0]/4),int(x.shape[0]/3),int(x.shape[0]/2),x.shape[0]]
     all_feature = []
     for n in range(len(window_point_Time[j][0])):
         for i in range(len(windowsize)):
@@ -177,13 +175,18 @@ for j,x in enumerate(Time_train_new):
             all_feature.append(temp)
 
     random_list_MA.append(all_feature)
-    
+
+class_train = np.array(class_train)   
+class_test = np.array(class_test) 
+np.save(os.path.join(save_path,'ABIDE_class_train.npy'),class_train)
+np.save(os.path.join(save_path,'ABIDE_class_test.npy'),class_test) 
 np.savez(os.path.join(save_path,'ABIDE_train_list_SA'),*random_list_SA)
 np.savez(os.path.join(save_path,'ABIDE_train_list_MA'),*random_list_MA)
 np.savez(os.path.join(save_path,'ABIDE_test_list'),*Time_test_new)
+np.savez(os.path.join(save_path,'ABIDE_train_list'),*Time_train_new)   
 with open(os.path.join(save_path,'ABIDE_names_train.txt'), 'w') as f:
-    for item in train_new:
+    for item in train:
         f.write("%s\n" % item)
 with open(os.path.join(save_path,'ABIDE_names_test.txt'), 'w') as f:
-    for item in test_new:
+    for item in test:
         f.write("%s\n" % item)

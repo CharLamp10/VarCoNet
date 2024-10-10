@@ -8,6 +8,7 @@ Created on Thu Sep 26 13:17:28 2024
 import torch
 import torch.nn.functional as F
 from abc import ABC, abstractmethod
+from torch.utils.data import Dataset
 
 
 class Loss(ABC):
@@ -101,3 +102,16 @@ class DualBranchContrast(torch.nn.Module):
         l2 = self.loss(anchor=anchor2, sample=sample2, pos_mask=pos_mask2, neg_mask=neg_mask2, **self.kwargs)
 
         return (l1 + l2) * 0.5
+    
+class ABIDEDataset(Dataset):
+    def __init__(self, data, labels):
+        self.data = data
+        self.labels = labels
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, idx):
+        x = torch.tensor(self.data[idx], dtype=torch.float32)
+        y = torch.tensor(self.labels[idx], dtype=torch.long)
+        return x, y
