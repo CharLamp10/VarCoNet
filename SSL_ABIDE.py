@@ -180,7 +180,7 @@ def test(encoder_model, train_loader,val_loader,test_loader, batch_size, device,
 
 #def main():
 
-path = r'/home/student1/Desktop/Charalampos_Lamprou/SSL_FC_matrix_data/Python/dparsf_cc200/resampled'
+path = r'/home/student1/Desktop/Charalampos_Lamprou/SSL_FC_matrix_data/Python/cpac_cc200/resampled/class_balanced'
         
 data = np.load(os.path.join(path,'ABIDE_train_list_MA.npz'))
 MA = []
