@@ -2,7 +2,7 @@ import pickle
 import numpy as np
 import os  
 
-case = 'DPARSF-CC400'
+case = 'CPAC-CC400'
 
 SL_val_aucs = np.load(os.path.join('results_ABIDE',case,'ABIDE_SL_ValAucs.npy'))
 SL_val_losses = np.load(os.path.join('results_ABIDE',case,'ABIDE_SL_Vallosses.npy'))
