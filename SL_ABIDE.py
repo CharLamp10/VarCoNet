@@ -265,18 +265,18 @@ for i in range(10):
     if save_models:
         torch.save(min_val_loss_model, os.path.join('models_ABIDE','ABIDE_SL_min_val_loss_model_' + str(i) + '.pth'))
         torch.save(max_val_auc_model, os.path.join('models_ABIDE','ABIDE_SL_max_val_auc_model_' + str(i) +'.pth'))
-        
-np.save(os.path.join('results_ABIDE','ABIDE_SL_losses.npy'), losses_all)
-np.save(os.path.join('results_ABIDE','ABIDE_SL_aucs.npy'), aucs_all)
-np.save(os.path.join('results_ABIDE','ABIDE_SL_Vallosses.npy'), val_losses_all)
-np.save(os.path.join('results_ABIDE','ABIDE_SL_ValAucs.npy'), val_aucs_all)
-
-results = {
-    "test_loss": test_losses,
-    "test_auc": test_aucs
-}
-with open(os.path.join('results_ABIDE','ABIDE_SL_results.pkl'), "wb") as pickle_file:
-    pickle.dump(results, pickle_file)
+if save_results:        
+    np.save(os.path.join('results_ABIDE','ABIDE_SL_losses.npy'), losses_all)
+    np.save(os.path.join('results_ABIDE','ABIDE_SL_aucs.npy'), aucs_all)
+    np.save(os.path.join('results_ABIDE','ABIDE_SL_Vallosses.npy'), val_losses_all)
+    np.save(os.path.join('results_ABIDE','ABIDE_SL_ValAucs.npy'), val_aucs_all)
+    
+    results = {
+        "test_loss": test_losses,
+        "test_auc": test_aucs
+    }
+    with open(os.path.join('results_ABIDE','ABIDE_SL_results.pkl'), "wb") as pickle_file:
+        pickle.dump(results, pickle_file)
 
 #if __name__ == '__main__':
 #    main()
