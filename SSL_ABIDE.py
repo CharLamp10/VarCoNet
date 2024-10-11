@@ -180,7 +180,7 @@ def test(encoder_model, train_loader,val_loader,test_loader, batch_size, device,
 
 #def main():
 
-path = r'/home/student1/Desktop/Charalampos_Lamprou/SSL_FC_matrix_data/Python/dparsf_cc200/resampled/class_balanced'
+path = r'/home/student1/Desktop/Charalampos_Lamprou/SSL_FC_matrix_data/Python/cpac_cc400/resampled/class_balanced'
         
 data = np.load(os.path.join(path,'ABIDE_train_list_MA.npz'))
 MA = []
@@ -238,7 +238,7 @@ for i in range(10):
     MA_loader = DataLoader(MA, batch_size=batch_size, shuffle = shuffle)
     SA_loader = DataLoader(SA, batch_size=batch_size, shuffle = shuffle)  
     
-    encoder_model = SeqenceModel(model_config, 200, 393).to(device)
+    encoder_model = SeqenceModel(model_config, 392, 393).to(device)
     contrast_model = DualBranchContrast(loss=InfoNCE(tau=tau),mode='L2L').to(device)
     
         
