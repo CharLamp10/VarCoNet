@@ -100,6 +100,7 @@ fig.update_layout(
     xaxis_title='Epochs',
     yaxis_title='Accuracy',
     template='plotly_white',
+    font=dict(size=16),
     xaxis=dict(
         tickvals=x,  # Keeping the same tick positions
         ticktext=[str(label) for label in custom_xticklabels],  # Custom tick labels
@@ -127,7 +128,6 @@ fig.add_trace(go.Scatter(
 
 # Customize the layout
 fig.update_layout(
-    title='Training Loss Curve',
     xaxis_title='Epoch',
     yaxis_title='Loss',
     font=dict(size=16),
