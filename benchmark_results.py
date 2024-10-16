@@ -10,18 +10,18 @@ import numpy as np
 import os
 
 path = r'/home/student1/Desktop/Charalampos_Lamprou/SSL_FC_matrix_data/Python'
-data = np.load(os.path.join(path,'random_list_test1.npz'))
+data = np.load(os.path.join(path,'random_list_test1_300.npz'))
 test_data1 = []
 for key in data:
     test_data1.append(data[key])
 
-data = np.load(os.path.join(path,'random_list_test2.npz'))
+data = np.load(os.path.join(path,'random_list_test2_300.npz'))
 test_data2 = []
 for key in data:
     test_data2.append(data[key])
 
-features1 = np.zeros((594,75,73536))
-features2 = np.zeros((594,75,73536))
+features1 = np.zeros((594,90,73536))
+features2 = np.zeros((594,90,73536))
 for j,data in enumerate(test_data1):
     for i in range(data.shape[0]):
         features = np.corrcoef(data[i,:,:].T)
@@ -62,18 +62,20 @@ for i in range(features1.shape[1]):
     print(i)
 
 # Calculate mean and standard deviation
-base_array = np.arange(75).reshape(15, 5)
+base_array = np.arange(90).reshape(15, 6)
 arr1 = base_array[:, 0]
 arr2 = base_array[:, 1]
 arr3 = base_array[:, 2]
 arr4 = base_array[:, 3]
 arr5 = base_array[:, 4]
+arr6 = base_array[:, 5]
 accuracies = np.array(accuracies)
 acc1 = accuracies[arr1]
 acc2 = accuracies[arr2]
 acc3 = accuracies[arr3]
 acc4 = accuracies[arr4]
 acc5 = accuracies[arr5]
+acc6 = accuracies[arr6]
 mean_acc1 = np.mean(acc1)
 std_acc1 = np.std(acc1)
 mean_acc2 = np.mean(acc2)
@@ -84,3 +86,5 @@ mean_acc4 = np.mean(acc4)
 std_acc4 = np.std(acc4)
 mean_acc5 = np.mean(acc5)
 std_acc5 = np.std(acc5)
+mean_acc6 = np.mean(acc6)
+std_acc6 = np.std(acc6)

@@ -128,7 +128,7 @@ def removeDuplicates(names,inds):
 def generate_random_numbers_with_distance(n, a, d):
     r = np.array([random.randint(0,d) for _ in range(n)])
     r1 = r*a+np.array([random.randint(0,a-1) for _ in range(n)])
-    cat = np.floor(r1/5).astype('int')*5
+    cat = np.floor(r1/a).astype('int')*a
     res = r1-cat
     list_of_options = []
     for i in range(len(res)):
@@ -141,12 +141,13 @@ def generate_random_numbers_with_distance(n, a, d):
         raise Exception('r1 and r2 have common elements')
     return r1,r2
     
-def generate_random_numbers(n, a, b):
-    r1 = np.array([random.randint(a,b) for _ in range(n)])
-    r2 = np.array([random.randint(a,b) for _ in range(n)])
+def generate_random_numbers(n, a1, b1, a2, b2):
+    r = np.array([random.randint(a1,b1) for _ in range(n)])
+    r1 = np.array([random.randint(a2,b2) for _ in range(n)])
+    r2 = np.array([random.randint(a2,b2) for _ in range(n)])
     while (r1 == r2).any():
-        r2 = np.array([random.randint(a,b) for _ in range(n)])
-    return r1,r2
+        r2 = np.array([random.randint(a2,b2) for _ in range(n)])
+    return r1,r2,r
 
 
 def train(x1, x2, x3, x4, encoder_model, contrast_model, optimizer):
@@ -211,18 +212,20 @@ def test(encoder_model, test_data1, test_data2, batch_size,device):
             accuracies.append((counter1 + counter2) / total_samples)
 
         # Calculate mean and standard deviation
-        base_array = np.arange(outputs1.shape[1]).reshape(int(outputs1.shape[1]/5), 5)
+        base_array = np.arange(outputs1.shape[1]).reshape(int(outputs1.shape[1]/6), 6)
         arr1 = base_array[:, 0]
         arr2 = base_array[:, 1]
         arr3 = base_array[:, 2]
         arr4 = base_array[:, 3]
         arr5 = base_array[:, 4]
+        arr6 = base_array[:, 5]
         accuracies = np.array(accuracies)
         acc1 = accuracies[arr1]
         acc2 = accuracies[arr2]
         acc3 = accuracies[arr3]
         acc4 = accuracies[arr4]
         acc5 = accuracies[arr5]
+        acc6 = accuracies[arr6]
         mean_acc1 = np.mean(acc1)
         std_acc1 = np.std(acc1)
         mean_acc2 = np.mean(acc2)
@@ -233,13 +236,15 @@ def test(encoder_model, test_data1, test_data2, batch_size,device):
         std_acc4 = np.std(acc4)
         mean_acc5 = np.mean(acc5)
         std_acc5 = np.std(acc5)
+        mean_acc6 = np.mean(acc6)
+        std_acc6 = np.std(acc6)
         print('')
-        for i in range(1, 6):
+        for i in range(1, 7):
             mean_acc = eval(f'mean_acc{i}')
             std_acc = eval(f'std_acc{i}')
             print(f'meanAcc{i}: {mean_acc:.2f}, stdAcc{i}: {std_acc:.3f}')  
             
-    return accuracies,mean_acc1,std_acc1,mean_acc2,std_acc2,mean_acc3,std_acc3,mean_acc4,std_acc4,mean_acc5,std_acc5
+    return accuracies,mean_acc1,std_acc1,mean_acc2,std_acc2,mean_acc3,std_acc3,mean_acc4,std_acc4,mean_acc5,std_acc5,mean_acc6,std_acc6
 
 
 #def main():
@@ -247,26 +252,26 @@ def test(encoder_model, test_data1, test_data2, batch_size,device):
 path = r'/home/student1/Desktop/Charalampos_Lamprou/SSL_FC_matrix_data/Python'
 
 names = []
-with open(os.path.join(path,'names.txt'), 'r') as f:
+with open(os.path.join(path,'names_300.txt'), 'r') as f:
     for line in f:
         names.append(line.strip())
         
-data = np.load(os.path.join(path,'random_list_MA.npz'))
+data = np.load(os.path.join(path,'random_list_MA_300.npz'))
 MA = []
 for key in data:
     MA.append(data[key])
 
-data = np.load(os.path.join(path,'random_list_SA.npz'))
+data = np.load(os.path.join(path,'random_list_SA_300.npz'))
 SA = []
 for key in data:
     SA.append(data[key])
 
-data = np.load(os.path.join(path,'random_list_test1.npz'))
+data = np.load(os.path.join(path,'random_list_test1_300.npz'))
 test_data1 = []
 for key in data:
     test_data1.append(data[key])
 
-data = np.load(os.path.join(path,'random_list_test2.npz'))
+data = np.load(os.path.join(path,'random_list_test2_300.npz'))
 test_data2 = []
 for key in data:
     test_data2.append(data[key])
@@ -290,7 +295,7 @@ model_config['pool_size'] = 4
 MA_loader = DataLoader(MA, batch_size=batch_size, shuffle = shuffle)
 SA_loader = DataLoader(SA, batch_size=batch_size, shuffle = shuffle)
 
-encoder_model = SeqenceModel(model_config, 384, 180).to(device)
+encoder_model = SeqenceModel(model_config, 384, 300).to(device)
 contrast_model = DualBranchContrast(loss=InfoNCE(tau=tau),mode='L2L').to(device)
     
 optimizer = Adam(encoder_model.parameters(), lr=lr)
@@ -312,17 +317,18 @@ with tqdm(total=epochs, desc='(T)') as pbar:
             batch_list = [SA[i] for i in sample_inds_sa]
             batch_loader = DataLoader(SA, batch_size=len(batch_list))
             batch_data = next(iter(batch_loader))
-            random_inds1,random_inds2 = generate_random_numbers(len(batch_list),0,batch_data.shape[1]-1)
-            batch_data1_sa = batch_data[np.arange(len(batch_list)), random_inds1]
-            batch_data2_sa = batch_data[np.arange(len(batch_list)), random_inds2]
+            random_inds1,random_inds2,random_inds = generate_random_numbers(len(batch_list),0,batch_data.shape[1]-1,0,batch_data.shape[2]-1)
+            batch_data1_sa = batch_data[np.arange(len(batch_list)), random_inds, random_inds1]
+            batch_data2_sa = batch_data[np.arange(len(batch_list)), random_inds, random_inds2]
             
             sample_inds_ma = removeDuplicates(names,sample_inds_ma)
             batch_list = [MA[i] for i in sample_inds_ma]
             batch_loader = DataLoader(MA, batch_size=len(batch_list))
             batch_data = next(iter(batch_loader))
-            random_inds1,random_inds2 = generate_random_numbers_with_distance(len(batch_list), 5, 15-1)
+            random_inds1,random_inds2 = generate_random_numbers_with_distance(len(batch_list), 6, 15-1)
             batch_data1_ma = batch_data[np.arange(len(batch_list)), random_inds1]
             batch_data2_ma = batch_data[np.arange(len(batch_list)), random_inds2]
+            
             loss,input_dim = train(batch_data1_sa.to(device), batch_data2_sa.to(device),
                                    batch_data1_ma.to(device), batch_data2_ma.to(device),
                                    encoder_model, contrast_model, optimizer)
@@ -371,5 +377,13 @@ if save_results:
 #meanAcc3: 0.26, stdAcc3: 0.012
 #meanAcc4: 0.31, stdAcc4: 0.020
 #meanAcc5: 0.37, stdAcc5: 0.024
+
+#meanAcc1: 0.15, stdAcc1: 0.013
+#meanAcc2: 0.20, stdAcc2: 0.013
+#meanAcc3: 0.26, stdAcc3: 0.014
+#meanAcc4: 0.31, stdAcc4: 0.010
+#meanAcc5: 0.37, stdAcc5: 0.011
+#meanAcc6: 0.50, stdAcc5: 0.016
+
 
 #Acc with full signal: 0.69

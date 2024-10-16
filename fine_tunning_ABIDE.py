@@ -1,5 +1,5 @@
 # %%
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Dataset
 import numpy as np
 import torch
 import torch.nn as nn
@@ -141,26 +141,27 @@ def test(encoder_model, test_data_loader, batch_size, loss_func, device):
 
 #def main():
 
-path = r'/home/student1/Desktop/Charalampos_Lamprou/SSL_FC_matrix_data/Python/dparsf_cc200'
+path = r'/home/student1/Desktop/Charalampos_Lamprou/SSL_FC_matrix_data/Python/cpac_cc200/resampled/class_balanced'
+
        
 data = np.load(os.path.join(path,'ABIDE_train_list.npz'))
-train_data1 = []
+train_data = []
 for key in data:
-    train_data1.append(data[key])
+    train_data.append(data[key])
 
 data = np.load(os.path.join(path,'ABIDE_test_list.npz'))
 test_data = []
 for key in data:
     test_data.append(data[key])
 
-y_train1 = np.load(os.path.join(path,'ABIDE_class_train.npy'))    
+y_train = np.load(os.path.join(path,'ABIDE_class_train.npy'))    
 y_test = np.load(os.path.join(path,'ABIDE_class_test.npy'))
  
 device = torch.device("cuda:3") if torch.cuda.is_available() else torch.device("cpu")
 batch_size = 128
 shuffle = True
 epochs = 100
-lr = 5e-5
+lr = 1e-5
 save_models = True
 save_results = True
 
@@ -177,7 +178,7 @@ val_losses_all = []
 aucs_all = []
 val_aucs_all = []
 for i in range(10):
-    train_data, val_data, y_train, y_val = train_test_split(train_data1, y_train1, test_size=0.15, random_state=42+i)
+    train_data, val_data, y_train, y_val = train_test_split(train_data, y_train, test_size=0.15, random_state=42+i)
     train_dataset = ABIDEDataset(train_data, y_train)
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle = shuffle, drop_last=True)
     val_dataset = ABIDEDataset(val_data, y_val)
@@ -185,7 +186,17 @@ for i in range(10):
     test_dataset = ABIDEDataset(test_data, y_test)
     test_loader = DataLoader(test_dataset, batch_size=batch_size)
     
+    min_loss_model = torch.load(os.path.join('models_ABIDE','CPAC-CC200','ABIDE_SSL_min_val_loss_model_' + str(i) + '.pth'))
+    new_min_loss_model = {}
+    for key in min_loss_model.keys():
+        # Remove the 'extract.' prefix from the keys
+        if key.startswith('extract.'):
+            new_key = key[len('extract.'):]  # Remove 'extract.'
+            new_min_loss_model[new_key] = min_loss_model[key]
+        else:
+            new_min_loss_model[key] = min_loss_model[key]
     encoder_model = SeqenceModel(model_config, 200, 393).to(device)
+    encoder_model.extract.load_state_dict(new_min_loss_model)
     
     loss_func = nn.BCELoss()
     optimizer = Adam(encoder_model.parameters(), lr=lr)
@@ -262,21 +273,17 @@ for i in range(10):
     val_aucs_all.append(val_aucs)
     
     if save_models:
-        torch.save(min_val_loss_model, os.path.join('models_ABIDE','ABIDE_SL_min_val_loss_model_' + str(i) + '.pth'))
-        torch.save(max_val_auc_model, os.path.join('models_ABIDE','ABIDE_SL_max_val_auc_model_' + str(i) +'.pth'))
+        torch.save(min_val_loss_model, os.path.join('models_ABIDE','ABIDE_FT_min_val_loss_model_' + str(i) + '.pth'))
+        torch.save(max_val_auc_model, os.path.join('models_ABIDE','ABIDE_FT_max_val_auc_model_' + str(i) +'.pth'))
 if save_results:        
-    np.save(os.path.join('results_ABIDE','ABIDE_SL_losses.npy'), losses_all)
-    np.save(os.path.join('results_ABIDE','ABIDE_SL_aucs.npy'), aucs_all)
-    np.save(os.path.join('results_ABIDE','ABIDE_SL_Vallosses.npy'), val_losses_all)
-    np.save(os.path.join('results_ABIDE','ABIDE_SL_ValAucs.npy'), val_aucs_all)
+    np.save(os.path.join('results_ABIDE','ABIDE_FT_losses.npy'), losses_all)
+    np.save(os.path.join('results_ABIDE','ABIDE_FT_aucs.npy'), aucs_all)
+    np.save(os.path.join('results_ABIDE','ABIDE_FT_Vallosses.npy'), val_losses_all)
+    np.save(os.path.join('results_ABIDE','ABIDE_FT_ValAucs.npy'), val_aucs_all)
     
     results = {
         "test_loss": test_losses,
         "test_auc": test_aucs
     }
-    with open(os.path.join('results_ABIDE','ABIDE_SL_results.pkl'), "wb") as pickle_file:
+    with open(os.path.join('results_ABIDE','ABIDE_FT_results.pkl'), "wb") as pickle_file:
         pickle.dump(results, pickle_file)
-
-#if __name__ == '__main__':
-#    main()
-

@@ -79,7 +79,7 @@ class ConvKRegion(nn.Module):
 
 class SeqenceModel(nn.Module):
 
-    def __init__(self, model_config, roi_num=384, time_series=180):
+    def __init__(self, model_config, roi_num=200, time_series=180):
         super().__init__()
 
         self.extract = ConvKRegion(
@@ -109,7 +109,7 @@ def upper_triangular_cosine_similarity(x):
 def generate_random_numbers_with_distance(n, a, d):
     r = np.array([random.randint(0,d) for _ in range(n)])
     r1 = r*a+np.array([random.randint(0,a-1) for _ in range(n)])
-    cat = np.floor(r1/5).astype('int')*5
+    cat = np.floor(r1/a).astype('int')*a
     res = r1-cat
     list_of_options = []
     for i in range(len(res)):
@@ -122,12 +122,21 @@ def generate_random_numbers_with_distance(n, a, d):
         raise Exception('r1 and r2 have common elements')
     return r1,r2
     
-def generate_random_numbers(n, a, b):
-    r1 = np.array([random.randint(a,b) for _ in range(n)])
-    r2 = np.array([random.randint(a,b) for _ in range(n)])
-    while (r1 == r2).any():
-        r2 = np.array([random.randint(a,b) for _ in range(n)])
-    return r1,r2
+def generate_random_numbers(n, a1, b1, non_zeros):
+    r = np.array([random.randint(a1,b1) for _ in range(n)])
+    nonzeros = non_zeros[np.arange(n),r]
+    r1s = []
+    r2s = []
+    for b in nonzeros:
+        r1 = random.randint(0,b)
+        r2 = random.randint(0,b) 
+        while r1 == r2:
+            r2 = random.randint(0,b) 
+        r1s.append(r1)
+        r2s.append(r2)
+    r1 = np.array(r1s)
+    r2 = np.array(r2s)
+    return r1,r2,r
 
 
 def train(x1, x2, x3, x4, encoder_model, contrast_model, optimizer):
@@ -180,29 +189,29 @@ def test(encoder_model, train_loader,val_loader,test_loader, batch_size, device,
 
 #def main():
 
-path = r'/home/student1/Desktop/Charalampos_Lamprou/SSL_FC_matrix_data/Python/cpac_cc400/resampled/class_balanced'
+path = r'/home/student1/Desktop/Charalampos_Lamprou/SSL_FC_matrix_data/Python/dparsf_cc200'
         
 data = np.load(os.path.join(path,'ABIDE_train_list_MA.npz'))
 MA = []
 for key in data:
     MA.append(data[key])
 
-data = np.load(os.path.join(path,'ABIDE_train_list_MA.npz'))
+data = np.load(os.path.join(path,'ABIDE_train_list_SA.npz'))
 SA = []
 for key in data:
     SA.append(data[key])
 
 data = np.load(os.path.join(path,'ABIDE_train_list.npz'))
-train_data = []
+train_data1 = []
 for key in data:
-    train_data.append(data[key])
+    train_data1.append(data[key])
 
 data = np.load(os.path.join(path,'ABIDE_test_list.npz'))
 test_data = []
 for key in data:
     test_data.append(data[key])
 
-y_train = np.load(os.path.join(path,'ABIDE_class_train.npy'))    
+y_train1 = np.load(os.path.join(path,'ABIDE_class_train.npy'))    
 y_test = np.load(os.path.join(path,'ABIDE_class_test.npy'))
 
     
@@ -210,12 +219,12 @@ y_test = np.load(os.path.join(path,'ABIDE_class_test.npy'))
 device = torch.device("cuda:3") if torch.cuda.is_available() else torch.device("cpu")
 batch_size = 128
 shuffle = True
-tau = 0.07
+tau = 0.02
 epochs = 70
-lr = 0.0005
+lr = 0.0001
 epochs_cls = 200
 lr_cls = 0.0005
-eval_epochs = list(range(1, epochs+1)) 
+eval_epochs = list(range(3, epochs+1)) 
 save_models = True
 save_results = True
 
@@ -227,7 +236,16 @@ model_config['pool_size'] = 4
 losses_all = []
 test_result_all = []
 for i in range(10):
-    train_data, val_data, y_train, y_val = train_test_split(train_data, y_train, test_size=0.15, random_state=42+i)
+    #train_data, val_data, y_train, y_val = train_test_split(train_data1, y_train1, test_size=0.15, random_state=42+i)
+    indices = np.arange(len(train_data1))
+    train_indices, val_indices = train_test_split(indices, y_train1, test_size=0.15, random_state=42+i)
+    train_data = train_data1[train_indices]
+    y_train = y_train1[train_indices]
+    val_data = train_data1[val_indices]
+    y_val = y_train1[val_indices]
+    MA = MA[train_indices]
+    SA = SA[train_indices]
+    
     train_dataset = ABIDEDataset(train_data, y_train)
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle = shuffle)
     val_dataset = ABIDEDataset(val_data, y_val)
@@ -238,7 +256,7 @@ for i in range(10):
     MA_loader = DataLoader(MA, batch_size=batch_size, shuffle = shuffle)
     SA_loader = DataLoader(SA, batch_size=batch_size, shuffle = shuffle)  
     
-    encoder_model = SeqenceModel(model_config, 392, 393).to(device)
+    encoder_model = SeqenceModel(model_config, 200, 393).to(device)
     contrast_model = DualBranchContrast(loss=InfoNCE(tau=tau),mode='L2L').to(device)
     
         
@@ -263,14 +281,19 @@ for i in range(10):
                 batch_list = [SA[i] for i in sample_inds_sa]
                 batch_loader = DataLoader(SA, batch_size=len(batch_list))
                 batch_data = next(iter(batch_loader))
-                random_inds1,random_inds2 = generate_random_numbers(len(batch_list),0,batch_data.shape[1]-1)
-                batch_data1_sa = batch_data[np.arange(len(batch_list)), random_inds1]
-                batch_data2_sa = batch_data[np.arange(len(batch_list)), random_inds2]
+                all_zeros = (batch_data[:,:,:,0] == 0).all(dim=-1)
+                non_zeros = np.zeros((batch_data.shape[0],batch_data.shape[1]))
+                for j in range(batch_data.shape[0]):
+                    for n in range(batch_data.shape[1]):
+                        non_zeros[j,n] = torch.min(torch.where(all_zeros[j,n,:])[0])-1
+                random_inds1,random_inds2,random_inds = generate_random_numbers(len(batch_list),0,batch_data.shape[1]-1,non_zeros)
+                batch_data1_sa = batch_data[np.arange(len(batch_list)), random_inds, random_inds1]
+                batch_data2_sa = batch_data[np.arange(len(batch_list)), random_inds, random_inds2]
                 
                 batch_list = [MA[i] for i in sample_inds_ma]
                 batch_loader = DataLoader(MA, batch_size=len(batch_list))
                 batch_data = next(iter(batch_loader))
-                random_inds1,random_inds2 = generate_random_numbers_with_distance(len(batch_list), 5, 8-1)
+                random_inds1,random_inds2 = generate_random_numbers_with_distance(len(batch_list), 4, 8-1)
                 batch_data1_ma = batch_data[np.arange(len(batch_list)), random_inds1]
                 batch_data2_ma = batch_data[np.arange(len(batch_list)), random_inds2]
                 loss,input_dim = train(batch_data1_sa.to(device), batch_data2_sa.to(device),
