@@ -2,7 +2,8 @@ import pickle
 import numpy as np
 import os  
 
-case = 'DPARSF-CC400'
+case = 'DPARSF-CC200'
+cat = 'SSL'
 
 SL_val_aucs = np.load(os.path.join('results_ABIDE',case,'ABIDE_SL_ValAucs.npy'))
 SL_val_losses = np.load(os.path.join('results_ABIDE',case,'ABIDE_SL_Vallosses.npy'))
@@ -14,10 +15,10 @@ with open(os.path.join('results_ABIDE',case,'ABIDE_SL_results.pkl'), 'rb') as f:
 with open(os.path.join('results_ABIDE',case,'ABIDE_SSL_test_results.pkl'), 'rb') as f:
     test_result_SSL = pickle.load(f)
 
-SSL_val_auc = np.zeros((10,70))   
-SSL_val_loss = np.zeros((10,70))  
-SSL_test_auc = np.zeros((10,70))   
-SSL_test_loss = np.zeros((10,70))  
+SSL_val_auc = np.zeros((10,68))   
+SSL_val_loss = np.zeros((10,68))  
+SSL_test_auc = np.zeros((10,68))   
+SSL_test_loss = np.zeros((10,68))  
 SL_val_auc = np.zeros((10,))   
 SL_val_loss = np.zeros((10,))  
 SL_test_auc = np.zeros((10,))   
