@@ -10,13 +10,13 @@ import scipy.io as sio
 from os.path import join
 import os
 from random import sample, randint
-import json
 
 
 train_subjects = 500
 
 path_data_1 = r'E:\REST1_ROIsignals'
 path_data_2 = r'E:\REST2_ROIsignals'
+path_save = r'C:\Users\100063082\Desktop\SSL_FC_matrix_data'
 
 dir1 = os.listdir(path_data_1)
 dir2 = os.listdir(path_data_2)
@@ -110,29 +110,47 @@ for name in rand_subjects:
                         names.append(name)
                     
 
-wind_size_max = 180
+wind_size_max = 300
+windowsize =[56,84,112,140,180,wind_size_max]
 """ S-A"""
-windowsize = 112
-strite = int(windowsize/2)
+strite = int(wind_size_max/2)
 random_list_SA = []
-t = 20
+t = 15
 for x in Time:
     all_feature = []
-    for i in range(t):
-        time = x.shape[0]
-        k = strite * i
-        if k + windowsize >= (time - 1):
-            k = randint(1, time - windowsize - 2)
-        feature_i = np.zeros((wind_size_max,384))   
-        feature_i[0:windowsize,:] = x[k:k + windowsize,:]
-        temp = feature_i.astype(np.float32)
-        all_feature.append(temp)
-
+    for size in windowsize:
+        feature = []
+        for i in range(t):
+            time = x.shape[0]
+            k = strite * i
+            if k + size >= (time - 1):
+                k = randint(1, time - size - 2)
+            feature_i = np.zeros((wind_size_max,384))   
+            feature_i[0:size,:] = x[k:k + size,:]
+            temp = feature_i.astype(np.float32)
+            feature.append(temp)
+        all_feature.append(feature)
     random_list_SA.append(all_feature)
+#windowsize = 140
+#strite = int(windowsize/2)
+#random_list_SA = []
+#t = 20
+#for x in Time:
+#    all_feature = []
+#    for i in range(t):
+#        time = x.shape[0]
+#        k = strite * i
+#        if k + windowsize >= (time - 1):
+#            k = randint(1, time - windowsize - 2)
+#        feature_i = np.zeros((wind_size_max,384))   
+#        feature_i[0:windowsize,:] = x[k:k + windowsize,:]
+#        temp = feature_i.astype(np.float32)
+#        all_feature.append(temp)
+#    random_list_SA.append(all_feature)
 
 """M-A"""
-windowsize =[56,84,112,140,wind_size_max]
-strite = 110
+#strite = 200
+#windowsize =[56,84,112,140,wind_size_max]
 random_list_MA = []
 window_point_Time = []
 t = 15
@@ -166,9 +184,9 @@ for j,x in enumerate(Time):
     random_list_MA.append(all_feature)
         
     
-np.savez('random_list_SA',*random_list_SA)
-np.savez('random_list_MA',*random_list_MA)
+np.savez(os.path.join(path_save,'random_list_SA_300'),*random_list_SA)
+np.savez(os.path.join(path_save,'random_list_MA_300'),*random_list_MA)
 
-with open('names.txt', 'w') as f:
+with open(os.path.join(path_save,'names_300.txt'), 'w') as f:
     for item in names:
         f.write("%s\n" % item)

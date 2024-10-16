@@ -40,8 +40,8 @@ def resample_signal(signal,name):
 
 
 wind_size_max = 393
-path_data = r'G:\ABIDE_ADHD_AAL\ABIDEI\dparsf_cc400\filt_noglobal\rois_cc400'
-save_path = r'C:\Users\100063082\Desktop\SSL_FC_matrix_data'
+path_data = r'G:\ABIDE_ADHD_AAL\ABIDEI\dparsf_cc200\filt_noglobal\rois_cc200'
+save_path = r'C:\Users\100063082\Desktop\SSL_FC_matrix_data\dparsf_cc200'
 path_phenotypic = r'G:\ABIDE_ADHD_AAL\ABIDEI\Phenotypic_V1_0b.csv'
 
 data_dir = os.listdir(path_data)
@@ -104,28 +104,53 @@ for data in Time_train:
     feature_padded = np.zeros((wind_size_max,rois))
     feature_padded[0:data.shape[0],:] = data
     Time_train_new.append(feature_padded)
+    
 
 """ S-A"""
 random_list_SA = []
 for x in Time_train:
-    windowsize = int(x.shape[0]/3)
-    strite = int(windowsize/2)
+    windowsize = [int(x.shape[0]/4),int(x.shape[0]/3)]
     t = 20
     all_feature = []
-    flag = True
-    for i in range(t):
-        if flag:
-            time = x.shape[0]
-            k = strite * i
-            if k + windowsize >= (time - 1):
-                k = randint(1, time - windowsize - 2)
-                flag = False
-            feature_i = np.zeros((wind_size_max,rois))   
-            feature_i[0:windowsize,:] = x[k:k + windowsize,:]
-            temp = feature_i.astype(np.float32)
-            all_feature.append(temp)
-
+    for size in windowsize:
+        strite = int(size/2)
+        feature = []
+        flag = True
+        for i in range(t):
+            if flag:
+                time = x.shape[0]
+                k = strite * i
+                if k + size >= (time - 1):
+                    k = randint(1, time - size - 2)
+                    flag = False
+                feature_i = np.zeros((wind_size_max,rois))   
+                feature_i[0:size,:] = x[k:k + size,:]
+                temp = feature_i.astype(np.float32)
+                feature.append(temp)
+        for j in range(10 - len(feature)):
+            feature.append(np.zeros_like(temp))
+        all_feature.append(feature)
     random_list_SA.append(all_feature)
+    
+#random_list_SA = []
+#for x in Time_train:
+#    windowsize = int(x.shape[0]/3)
+#    strite = int(windowsize/2)
+#    t = 20
+#    all_feature = []
+#    flag = True
+#    for i in range(t):
+#        if flag:
+#            time = x.shape[0]
+#            k = strite * i
+#            if k + windowsize >= (time - 1):
+#                k = randint(1, time - windowsize - 2)
+#                flag = False
+#            feature_i = np.zeros((wind_size_max,rois))   
+#            feature_i[0:windowsize,:] = x[k:k + windowsize,:]
+#            temp = feature_i.astype(np.float32)
+#            all_feature.append(temp)
+#    random_list_SA.append(all_feature)
 
 """M-A"""
 random_list_MA = []
@@ -175,6 +200,8 @@ for j,x in enumerate(Time_train):
             all_feature.append(temp)
 
     random_list_MA.append(all_feature)
+
+
 
 class_train = np.array(class_train)   
 class_test = np.array(class_test) 

@@ -13,6 +13,7 @@ from random import sample, randint
 
 
 path = r'C:\Users\100063082\Desktop\SSL_FC_matrix_data'
+path_save = r'C:\Users\100063082\Desktop\SSL_FC_matrix_data'
 
 path_data_1 = r'E:\REST1_ROIsignals'
 path_data_2 = r'E:\REST2_ROIsignals'
@@ -98,8 +99,8 @@ for name in test_names:
                         
                         
 
-windowsize =[56,84,112,140,180]
-strite = 110
+windowsize =[56,84,112,140,180,300]
+strite = 200
 random_list1 = []
 window_point_Time = []
 t = 15
@@ -132,9 +133,8 @@ for j,x in enumerate(Time1):
 
     random_list1.append(all_feature)
     
-    
-windowsize =[56,84,112,140,180]
-strite = 110
+
+strite = 200
 random_list2 = []
 window_point_Time = []
 t = 15
@@ -167,5 +167,5 @@ for j,x in enumerate(Time2):
 
     random_list2.append(all_feature)
     
-np.savez('random_list_test1',*random_list1)
-np.savez('random_list_test2',*random_list2)
+np.savez(os.path.join(path_save,'random_list_test1_300'),*random_list1)
+np.savez(os.path.join(path_save,'random_list_test2_300'),*random_list2)
