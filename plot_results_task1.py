@@ -23,6 +23,8 @@ mean_acc4 = []
 std_acc4 = []
 mean_acc5 = []
 std_acc5 = []
+mean_acc6 = []
+std_acc6 = []
 for test in test_result:
     mean_acc1.append(test[1])
     std_acc1.append(test[2])
@@ -34,6 +36,8 @@ for test in test_result:
     std_acc4.append(test[8])
     mean_acc5.append(test[9])
     std_acc5.append(test[10])
+    mean_acc6.append(test[11])
+    std_acc6.append(test[12])
     
 mean_acc1 = np.array(mean_acc1)
 std_acc1 = np.array(std_acc1)
@@ -45,6 +49,8 @@ mean_acc4 = np.array(mean_acc4)
 std_acc4 = np.array(std_acc4)
 mean_acc5 = np.array(mean_acc5)
 std_acc5 = np.array(std_acc5)
+mean_acc6 = np.array(mean_acc6)
+std_acc6 = np.array(std_acc6)
 
 x = np.arange(1, len(test_result)+1)
 
@@ -54,11 +60,12 @@ line_colors = ['rgba(255,0,0,1)',     # Red
                'rgba(0,0,255,1)',     # Blue
                'rgba(0,255,0,1)',     # Green
                'rgba(255,0,255,1)',   # Magenta
-               'rgba(0,255,255,1)']    # Cyan
+               'rgba(0,255,255,1)',   # Cyan
+               'rgba(165,42,42,1)']   # Brown 
 
-lengths = [56, 84, 112, 140, 180]
+lengths = [56, 84, 112, 140, 180, 300]
 # Adding all accuracy lines and their shaded areas
-for i in range(1, 6):
+for i in range(1, 7):
     mean_acc = eval(f'mean_acc{i}')
     std_acc = eval(f'std_acc{i}')
     line_color = line_colors[i - 1]
@@ -82,7 +89,7 @@ for i in range(1, 6):
         showlegend=False,
     ))
 
-horizontal_lines = [0.14, 0.20, 0.26, 0.31, 0.37]
+horizontal_lines = [0.14, 0.20, 0.26, 0.31, 0.37, 0.50]
 
 for i, y in enumerate(horizontal_lines):
     color = line_colors[i]  # Get the corresponding color for the line
@@ -111,7 +118,7 @@ fig.update_layout(
         font=dict(size=16)  # Change the legend font size
     )
 )
-fig.write_image('subject_fingerprinting_rates.png',scale=8, engine = "orca")
+fig.write_image('subject_fingerprinting_rates_300.png',scale=8, engine = "orca")
 
 
 
@@ -136,4 +143,4 @@ fig.update_layout(
 )
 
 # Save the figure as a high-resolution image (optional)
-fig.write_image('task1_training_loss.png', scale=8, engine = "orca")
+fig.write_image('task1_training_loss_300.png', scale=8, engine = "orca")
