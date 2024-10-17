@@ -275,7 +275,7 @@ data = np.load(os.path.join(path,'random_list_test2_300.npz'))
 test_data2 = []
 for key in data:
     test_data2.append(data[key])
-    
+
 
 device = torch.device("cuda:3") if torch.cuda.is_available() else torch.device("cpu")
 batch_size = 128
@@ -348,8 +348,8 @@ with tqdm(total=epochs, desc='(T)') as pbar:
         if epoch in eval_epochs:
             res = test(encoder_model, test_data1, test_data2, batch_size,device)
             test_result.append(res) 
-            if res[1]+res[3]+res[5]+res[7]+res[9] > max_acc:
-                max_acc = res[1]+res[3]+res[5]+res[7]+res[9]
+            if res[1]+res[3]+res[5]+res[7]+res[9]+res[11] > max_acc:
+                max_acc = res[1]+res[3]+res[5]+res[7]+res[9]+res[11]
                 max_acc_model = encoder_model.state_dict()
                 max_acc_epoch = epoch
 

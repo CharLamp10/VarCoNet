@@ -139,6 +139,29 @@ def generate_random_numbers(n, a1, b1, non_zeros):
     return r1,r2,r
 
 
+def custom_train_test_split(X, y, test_size=0.1, random_state=None):
+    if random_state is not None:
+        np.random.seed(random_state)
+
+    class_0_indices = np.where(y == 0)[0]
+    class_1_indices = np.where(y == 1)[0]
+    
+    n_val_samples_per_class = min(len(class_0_indices), len(class_1_indices), int(test_size * len(X) / 2))
+
+    val_class_0_indices = np.random.choice(class_0_indices, n_val_samples_per_class, replace=False)
+    val_class_1_indices = np.random.choice(class_1_indices, n_val_samples_per_class, replace=False)
+
+    val_indices = np.concatenate([val_class_0_indices, val_class_1_indices])
+
+    train_indices = np.setdiff1d(np.arange(len(X)), val_indices)
+
+    X_train = [X[i] for i in train_indices]
+    X_val = [X[i] for i in val_indices]
+    y_train, y_val = y[train_indices], y[val_indices]
+
+    return X_train, X_val, y_train, y_val, train_indices, val_indices
+
+
 def train(x1, x2, x3, x4, encoder_model, contrast_model, optimizer):
     encoder_model.train()
     optimizer.zero_grad()
@@ -192,14 +215,14 @@ def test(encoder_model, train_loader,val_loader,test_loader, batch_size, device,
 path = r'/home/student1/Desktop/Charalampos_Lamprou/SSL_FC_matrix_data/Python/dparsf_cc200'
         
 data = np.load(os.path.join(path,'ABIDE_train_list_MA.npz'))
-MA = []
+MA1 = []
 for key in data:
-    MA.append(data[key])
+    MA1.append(data[key])
 
 data = np.load(os.path.join(path,'ABIDE_train_list_SA.npz'))
-SA = []
+SA1 = []
 for key in data:
-    SA.append(data[key])
+    SA1.append(data[key])
 
 data = np.load(os.path.join(path,'ABIDE_train_list.npz'))
 train_data1 = []
@@ -221,12 +244,12 @@ batch_size = 128
 shuffle = True
 tau = 0.02
 epochs = 70
-lr = 0.0001
-epochs_cls = 200
+lr = 0.0002
+epochs_cls = 300
 lr_cls = 0.0005
 eval_epochs = list(range(3, epochs+1)) 
-save_models = True
-save_results = True
+save_models = False
+save_results = False
 
 model_config = {}
 model_config['embedding_size'] = 128
@@ -236,15 +259,11 @@ model_config['pool_size'] = 4
 losses_all = []
 test_result_all = []
 for i in range(10):
-    #train_data, val_data, y_train, y_val = train_test_split(train_data1, y_train1, test_size=0.15, random_state=42+i)
     indices = np.arange(len(train_data1))
-    train_indices, val_indices = train_test_split(indices, y_train1, test_size=0.15, random_state=42+i)
-    train_data = train_data1[train_indices]
-    y_train = y_train1[train_indices]
-    val_data = train_data1[val_indices]
-    y_val = y_train1[val_indices]
-    MA = MA[train_indices]
-    SA = SA[train_indices]
+    train_data, val_data, y_train, y_val, train_indices, val_indices = custom_train_test_split(train_data1, y_train1, test_size=0.1, random_state=42+i)
+    #train_data, val_data, y_train, y_val, train_indices, val_indices = train_test_split(train_data1, y_train1, indices, test_size=0.1, random_state=42+i)
+    MA = [MA1[i] for i in train_indices]
+    SA = [SA1[i] for i in train_indices]
     
     train_dataset = ABIDEDataset(train_data, y_train)
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle = shuffle)
@@ -293,7 +312,7 @@ for i in range(10):
                 batch_list = [MA[i] for i in sample_inds_ma]
                 batch_loader = DataLoader(MA, batch_size=len(batch_list))
                 batch_data = next(iter(batch_loader))
-                random_inds1,random_inds2 = generate_random_numbers_with_distance(len(batch_list), 4, 8-1)
+                random_inds1,random_inds2 = generate_random_numbers_with_distance(len(batch_list), 5, 8-1)
                 batch_data1_ma = batch_data[np.arange(len(batch_list)), random_inds1]
                 batch_data2_ma = batch_data[np.arange(len(batch_list)), random_inds2]
                 loss,input_dim = train(batch_data1_sa.to(device), batch_data2_sa.to(device),
