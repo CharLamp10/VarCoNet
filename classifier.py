@@ -20,7 +20,7 @@ class MLP(nn.Module):
 
 
 class LREvaluator(BaseEvaluator):
-    def __init__(self, num_epochs: int = 200, learning_rate: float = 0.0005, test_interval: int = 10):     #10
+    def __init__(self, num_epochs: int = 200, learning_rate: float = 0.0005, test_interval: int = 1):     #10
         self.num_epochs = num_epochs
         self.learning_rate = learning_rate
         self.test_interval = test_interval
@@ -61,8 +61,7 @@ class LREvaluator(BaseEvaluator):
                     best_train_loss = class_loss_train
                     best_val_loss = class_loss_val
                     best_test_loss = class_loss_test
-                
-    
+                    
         print('')
         print(f'train_auc: {best_train_auc:.2f} | train_loss: {best_train_loss:.2f}')
         print(f'val_auc  : {best_val_auc:.2f} | val_loss  : {best_val_loss:.2f}')
