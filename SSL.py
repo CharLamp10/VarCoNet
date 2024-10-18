@@ -142,7 +142,9 @@ def generate_random_numbers_with_distance(n, a, d):
     return r1,r2
     
 def generate_random_numbers(n, a1, b1, a2, b2):
-    r = np.array([random.randint(a1,b1) for _ in range(n)])
+    r = random.randint(a1,b1)
+    r = np.array([r for _ in range(n)])
+    #r = np.array([random.randint(a1,b1) for _ in range(n)])
     r1 = np.array([random.randint(a2,b2) for _ in range(n)])
     r2 = np.array([random.randint(a2,b2) for _ in range(n)])
     while (r1 == r2).any():
@@ -280,7 +282,7 @@ for key in data:
 device = torch.device("cuda:3") if torch.cuda.is_available() else torch.device("cpu")
 batch_size = 128
 shuffle = True
-tau = 0.07
+tau = 0.05
 epochs = 300
 lr = 0.005
 eval_epochs = [1,5,10,20,50,75,100,125,150,175,200,225,250,275,300]
