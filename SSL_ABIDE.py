@@ -248,8 +248,8 @@ lr = 0.0002
 epochs_cls = 300
 lr_cls = 0.0005
 eval_epochs = list(range(3, epochs+1)) 
-save_models = False
-save_results = False
+save_models = True
+save_results = True
 
 model_config = {}
 model_config['embedding_size'] = 128

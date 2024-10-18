@@ -87,6 +87,7 @@ class SeqenceModel(nn.Module):
         self.linear = nn.Sequential(
             Linear(int((roi_num*(roi_num-1))/2), 2),
             nn.Softmax(dim=1))
+        
 
 
     def forward(self, x):
@@ -108,16 +109,38 @@ def upper_triangular_cosine_similarity(x):
 
     return upper_triangular_values    
 
+def custom_train_test_split(X, y, test_size=0.1, random_state=None):
+    if random_state is not None:
+        np.random.seed(random_state)
+
+    class_0_indices = np.where(y == 0)[0]
+    class_1_indices = np.where(y == 1)[0]
+    
+    n_val_samples_per_class = min(len(class_0_indices), len(class_1_indices), int(test_size * len(X) / 2))
+
+    val_class_0_indices = np.random.choice(class_0_indices, n_val_samples_per_class, replace=False)
+    val_class_1_indices = np.random.choice(class_1_indices, n_val_samples_per_class, replace=False)
+
+    val_indices = np.concatenate([val_class_0_indices, val_class_1_indices])
+
+    train_indices = np.setdiff1d(np.arange(len(X)), val_indices)
+
+    X_train = [X[i] for i in train_indices]
+    X_val = [X[i] for i in val_indices]
+    y_train, y_val = y[train_indices], y[val_indices]
+
+    return X_train, X_val, y_train, y_val, train_indices, val_indices
+
 def train(x, y, encoder_model, optimizer, loss_func):
     encoder_model.train()
     optimizer.zero_grad()
     z = encoder_model(x)
     loss = loss_func(z, F.one_hot(y, num_classes=2).float())
+    loss.backward()
+    optimizer.step()
     z = z[:,-1].detach().cpu().numpy()
     y = y.to(torch.device("cpu")).numpy()
     auc_score = roc_auc_score(y, z)
-    loss.backward()
-    optimizer.step()
     return loss.item(),auc_score
 
 
@@ -177,7 +200,7 @@ val_losses_all = []
 aucs_all = []
 val_aucs_all = []
 for i in range(10):
-    train_data, val_data, y_train, y_val = train_test_split(train_data1, y_train1, test_size=0.15, random_state=42+i)
+    train_data, val_data, y_train, y_val,_,_ = custom_train_test_split(train_data1, y_train1, test_size=0.1, random_state=42+i)
     train_dataset = ABIDEDataset(train_data, y_train)
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle = shuffle, drop_last=True)
     val_dataset = ABIDEDataset(val_data, y_val)
