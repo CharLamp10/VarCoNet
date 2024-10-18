@@ -4,12 +4,12 @@ import os
 import plotly.graph_objects as go
 
 losses = []
-with open(os.path.join('results', 'losses.txt'), 'r') as f:
+with open(os.path.join('results', 'losses_300_vol2.txt'), 'r') as f:
     for line in f:
         losses.append(float(line.strip()))
 losses = np.array(losses)
         
-with open(os.path.join('results', 'test_results.pkl'), 'rb') as f:
+with open(os.path.join('results', 'test_results_300_vol2.pkl'), 'rb') as f:
     test_result = pickle.load(f)
 
 test_result = test_result[:-1]
