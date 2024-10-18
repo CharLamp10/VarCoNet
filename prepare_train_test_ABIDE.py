@@ -40,8 +40,8 @@ def resample_signal(signal,name):
 
 
 wind_size_max = 393
-path_data = r'G:\ABIDE_ADHD_AAL\ABIDEI\dparsf_cc200\filt_noglobal\rois_cc200'
-save_path = r'C:\Users\100063082\Desktop\SSL_FC_matrix_data\dparsf_cc200'
+path_data = r'G:\ABIDE_ADHD_AAL\ABIDEI\dparsf_cc400\filt_noglobal\rois_cc400'
+save_path = r'C:\Users\100063082\Desktop\SSL_FC_matrix_data\dparsf_cc400_all'
 path_phenotypic = r'G:\ABIDE_ADHD_AAL\ABIDEI\Phenotypic_V1_0b.csv'
 
 data_dir = os.listdir(path_data)
@@ -109,7 +109,7 @@ for data in Time_train:
 """ S-A"""
 random_list_SA = []
 for x in Time_train:
-    windowsize = [int(x.shape[0]/4),int(x.shape[0]/3)]
+    windowsize = [int(x.shape[0]/4),int(x.shape[0]/3),int(x.shape[0]/2)]
     t = 20
     all_feature = []
     for size in windowsize:
@@ -200,6 +200,86 @@ for j,x in enumerate(Time_train):
             all_feature.append(temp)
 
     random_list_MA.append(all_feature)
+    
+    
+    
+
+
+""" S-A"""
+random_list_SA_all = []
+for x in Times:
+    windowsize = [int(x.shape[0]/4),int(x.shape[0]/3),int(x.shape[0]/2)]
+    t = 20
+    all_feature = []
+    for size in windowsize:
+        strite = int(size/2)
+        feature = []
+        flag = True
+        for i in range(t):
+            if flag:
+                time = x.shape[0]
+                k = strite * i
+                if k + size >= (time - 1):
+                    k = randint(1, time - size - 2)
+                    flag = False
+                feature_i = np.zeros((wind_size_max,rois))   
+                feature_i[0:size,:] = x[k:k + size,:]
+                temp = feature_i.astype(np.float32)
+                feature.append(temp)
+        for j in range(10 - len(feature)):
+            feature.append(np.zeros_like(temp))
+        all_feature.append(feature)
+    random_list_SA_all.append(all_feature)
+    
+
+"""M-A"""
+random_list_MA_all = []
+window_point_Time = []
+t = 20
+for x in Times:
+    windowsize = [int(x.shape[0]/5),int(x.shape[0]/4),int(x.shape[0]/3),int(x.shape[0]/2),x.shape[0]]
+    point_Time = []
+    for size in windowsize:
+        strite = int(size/2)+1
+        if size != windowsize[-1]:
+            time = x.shape[0]
+            window_point = []
+            flag = True
+            for i in range(t):
+                if flag:
+                    k = strite * (i+1)
+                    if k + size / 2 >= (time - 1):
+                        flag = False
+                    else:
+                        begin = int(k - size / 2)
+                        end = int(k + size / 2)
+                        window_point.append([begin, k , end])
+        else:
+             window_point = [[0,int(x.shape[0]/2),x.shape[0]]]
+        if len(point_Time) == 0:
+            point_Time.append(window_point)
+        else:
+            if len(point_Time[0]) > len(window_point):
+                if len(point_Time[0]) % len(window_point) == 0:
+                    window_point = window_point*int(len(point_Time[0]) / len(window_point))
+                else:
+                    window_point = window_point + choices(window_point, k=len(point_Time[0]) - len(window_point))  
+            point_Time.append(window_point)
+    window_point_Time.append(point_Time)
+
+for j,x in enumerate(Times):
+    windowsize = [int(x.shape[0]/5),int(x.shape[0]/4),int(x.shape[0]/3),int(x.shape[0]/2),x.shape[0]]
+    all_feature = []
+    for n in range(len(window_point_Time[j][0])):
+        for i in range(len(windowsize)):
+            begin = window_point_Time[j][i][n][0]
+            end =   window_point_Time[j][i][n][-1]
+            feature_i = np.zeros((wind_size_max,rois))
+            feature_i[0:windowsize[i],:] = x[begin:end,:]
+            temp = feature_i.astype(np.float32)
+            all_feature.append(temp)
+
+    random_list_MA_all.append(all_feature)
 
 
 
@@ -209,6 +289,8 @@ np.save(os.path.join(save_path,'ABIDE_class_train.npy'),class_train)
 np.save(os.path.join(save_path,'ABIDE_class_test.npy'),class_test) 
 np.savez(os.path.join(save_path,'ABIDE_train_list_SA'),*random_list_SA)
 np.savez(os.path.join(save_path,'ABIDE_train_list_MA'),*random_list_MA)
+np.savez(os.path.join(save_path,'ABIDE_train_list_SA_all'),*random_list_SA_all)
+np.savez(os.path.join(save_path,'ABIDE_train_list_MA_all'),*random_list_MA_all)
 np.savez(os.path.join(save_path,'ABIDE_test_list'),*Time_test_new)
 np.savez(os.path.join(save_path,'ABIDE_train_list'),*Time_train_new)   
 with open(os.path.join(save_path,'ABIDE_names_train.txt'), 'w') as f:

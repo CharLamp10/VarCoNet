@@ -111,7 +111,7 @@ for name in rand_subjects:
                     
 
 wind_size_max = 300
-windowsize =[56,84,112,140,180,wind_size_max]
+windowsize =[56,84,112,140,180,220,260,wind_size_max]
 """ S-A"""
 strite = int(wind_size_max/2)
 random_list_SA = []
@@ -184,9 +184,9 @@ for j,x in enumerate(Time):
     random_list_MA.append(all_feature)
         
     
-np.savez(os.path.join(path_save,'random_list_SA_300'),*random_list_SA)
-np.savez(os.path.join(path_save,'random_list_MA_300'),*random_list_MA)
+np.savez(os.path.join(path_save,'random_list_SA_300_dense'),*random_list_SA)
+np.savez(os.path.join(path_save,'random_list_MA_300_dense'),*random_list_MA)
 
-with open(os.path.join(path_save,'names_300.txt'), 'w') as f:
+with open(os.path.join(path_save,'names_300_dense.txt'), 'w') as f:
     for item in names:
         f.write("%s\n" % item)

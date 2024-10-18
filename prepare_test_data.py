@@ -99,7 +99,7 @@ for name in test_names:
                         
                         
 
-windowsize =[56,84,112,140,180,300]
+windowsize =[56,84,112,140,180,220,260,300]
 strite = 200
 random_list1 = []
 window_point_Time = []
@@ -167,5 +167,5 @@ for j,x in enumerate(Time2):
 
     random_list2.append(all_feature)
     
-np.savez(os.path.join(path_save,'random_list_test1_300'),*random_list1)
-np.savez(os.path.join(path_save,'random_list_test2_300'),*random_list2)
+np.savez(os.path.join(path_save,'random_list_test1_300_dense'),*random_list1)
+np.savez(os.path.join(path_save,'random_list_test2_300_dense'),*random_list2)
