@@ -282,10 +282,10 @@ for key in data:
 device = torch.device("cuda:3") if torch.cuda.is_available() else torch.device("cpu")
 batch_size = 128
 shuffle = True
-tau = 0.05
+tau = 0.07
 epochs = 300
-lr = 0.005
-eval_epochs = [1,5,10,20,50,75,100,125,150,175,200,225,250,275,300]
+lr = 0.005 #0.005
+eval_epochs = [1,5,10,20,30,40,50,60,70,80,90,100,125,150,175,200,225,250,275,300]
 save_models = True
 save_results = True
 

@@ -164,7 +164,7 @@ def test(encoder_model, test_data_loader, batch_size, loss_func, device):
 
 #def main():
 
-path = r'/home/student1/Desktop/Charalampos_Lamprou/SSL_FC_matrix_data/Python/dparsf_cc200'
+path = r'/home/student1/Desktop/Charalampos_Lamprou/SSL_FC_matrix_data/Python/cpac_cc400'
        
 data = np.load(os.path.join(path,'ABIDE_train_list.npz'))
 train_data1 = []
@@ -208,7 +208,7 @@ for i in range(10):
     test_dataset = ABIDEDataset(test_data, y_test)
     test_loader = DataLoader(test_dataset, batch_size=batch_size)
     
-    encoder_model = SeqenceModel(model_config, 200, 393).to(device)
+    encoder_model = SeqenceModel(model_config, 392, 393).to(device)
     
     loss_func = nn.BCELoss()
     optimizer = Adam(encoder_model.parameters(), lr=lr)
