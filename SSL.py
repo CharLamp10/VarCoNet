@@ -74,8 +74,7 @@ class ConvKRegion(nn.Module):
         if torch.sum(x==x[0,0,-1]) > d:
             x[x==x[0,0,-1]] = 0
         
-        x = self.linear(x)
-
+        #x = self.linear(x)
         return x
 
 
