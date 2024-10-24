@@ -13,6 +13,6 @@ Our repository includes the following Python scripts:
 11) prepare_test_data: prepares and saves the data that are used to perform the subject fingerprinting (used by the SSL.py and benchmark_results.py scripts)
 12) prepare_train_test_ABIDE: prepares the data that are used to perform the contrastive training and ASD classification (testing) on ABIDE I data (used by the SSL_ABIDE and SL_ABIDE.py scripts)
 
-ABIDE I data can be downloaded using download_abide_preprocessed_dataset.ipynb script from the following GitHub repository: https://github.com/ShawonBarman/How-to-download-ABIDE-Preprocessed-dataset-for-autism-detection/blob/main/download_abide_preprocessed_dataset.ipynb
+Preprocessed and parcellated ABIDE I data can be downloaded using download_abide_preprocessed_dataset.ipynb script from the following GitHub repository: https://github.com/ShawonBarman/How-to-download-ABIDE-Preprocessed-dataset-for-autism-detection/blob/main/download_abide_preprocessed_dataset.ipynb
 
 HCP data can be downloaded from the following link (account is required): https://db.humanconnectome.org/app/action/DownloadPackagesAction
