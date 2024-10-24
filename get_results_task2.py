@@ -2,15 +2,14 @@ import pickle
 import numpy as np
 import os  
 
-case = 'DPARSF-CC200'
-cat = 'SSL'
+case = 'CPAC-CC200'
 
-#SL_val_aucs = np.load(os.path.join('results_ABIDE',case,'ABIDE_SL_ValAucs.npy'))
-#SL_val_losses = np.load(os.path.join('results_ABIDE',case,'ABIDE_SL_Vallosses.npy'))
+SL_val_aucs = np.load(os.path.join('results_ABIDE',case,'ABIDE_SL_ValAucs.npy'))
+SL_val_losses = np.load(os.path.join('results_ABIDE',case,'ABIDE_SL_Vallosses.npy'))
 
 
-#with open(os.path.join('results_ABIDE',case,'ABIDE_SL_results.pkl'), 'rb') as f:
-#    test_result_SL = pickle.load(f)
+with open(os.path.join('results_ABIDE',case,'ABIDE_SL_results.pkl'), 'rb') as f:
+    test_result_SL = pickle.load(f)
     
 with open(os.path.join('results_ABIDE',case,'ABIDE_SSL_test_results.pkl'), 'rb') as f:
     test_result_SSL = pickle.load(f)
@@ -37,18 +36,18 @@ best_val_losses_SSL = SSL_val_loss[np.arange(10),min_positions_SSL]
 best_test_aucs_SSL = SSL_test_auc[np.arange(10),min_positions_SSL]
 best_test_losses_SSL = SSL_test_loss[np.arange(10),min_positions_SSL]
 
-#min_positions_SL = np.argmin(SL_val_losses, axis=1)
-#best_val_aucs_SL = SL_val_aucs[np.arange(10),min_positions_SL]
-#best_val_losses_SL = SL_val_losses[np.arange(10),min_positions_SL]
-#best_test_aucs_SL = np.array(test_result_SL['test_auc'])
-#best_test_losses_SL = np.array(test_result_SL['test_loss'])
+min_positions_SL = np.argmin(SL_val_losses, axis=1)
+best_val_aucs_SL = SL_val_aucs[np.arange(10),min_positions_SL]
+best_val_losses_SL = SL_val_losses[np.arange(10),min_positions_SL]
+best_test_aucs_SL = np.array(test_result_SL['test_auc'])
+best_test_losses_SL = np.array(test_result_SL['test_loss'])
 
 print(f"SSL: mean validation AUC= {np.mean(best_val_aucs_SSL):.2f}, std={np.std(best_val_aucs_SSL):.2f}")
 print(f"SSL: mean validation Loss={np.mean(best_val_losses_SSL):.2f}, std={np.std(best_val_losses_SSL):.2f}")
 print(f"SSL: mean test       AUC= {np.mean(best_test_aucs_SSL):.2f}, std={np.std(best_test_aucs_SSL):.2f}")
 print(f"SSL: mean test       Loss={np.mean(best_test_losses_SSL):.2f}, std={np.std(best_test_losses_SSL):.2f}")
-print('')
-print(f"SL: mean validation AUC= {np.mean(best_val_aucs_SL):.2f}, std={np.std(best_val_aucs_SL):.2f}")
-print(f"SL: mean validation Loss={np.mean(best_val_losses_SL):.2f}, std={np.std(best_val_losses_SL):.2f}")
-print(f"SL: mean test       AUC= {np.mean(best_test_aucs_SL):.2f}, std={np.std(best_test_aucs_SL):.2f}")
-print(f"SL: mean test       Loss={np.mean(best_test_losses_SL):.2f}, std={np.std(best_test_losses_SL):.2f}")
+#print('')
+#print(f"SL: mean validation AUC= {np.mean(best_val_aucs_SL):.2f}, std={np.std(best_val_aucs_SL):.2f}")
+#print(f"SL: mean validation Loss={np.mean(best_val_losses_SL):.2f}, std={np.std(best_val_losses_SL):.2f}")
+#print(f"SL: mean test       AUC= {np.mean(best_test_aucs_SL):.2f}, std={np.std(best_test_aucs_SL):.2f}")
+#print(f"SL: mean test       Loss={np.mean(best_test_losses_SL):.2f}, std={np.std(best_test_losses_SL):.2f}")
