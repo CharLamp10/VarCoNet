@@ -1,4 +1,3 @@
-# %%
 from torch.utils.data import DataLoader
 import numpy as np
 import torch
@@ -11,11 +10,9 @@ from pl_bolts.optimizers import LinearWarmupCosineAnnealingLR
 from utils import ABIDEDataset
 import os
 import pickle
-from sklearn.model_selection import train_test_split
 from sklearn.metrics import roc_auc_score
 
 
-# %%
 class ConvKRegion(nn.Module):
 
     def __init__(self, k=1, out_size=8, kernel_size=8, pool_size=8, time_series=295):
@@ -162,144 +159,158 @@ def test(encoder_model, test_data_loader, batch_size, loss_func, device):
     return loss.item(), auc_score
 
 
-#def main():
-
-path = r'/home/student1/Desktop/Charalampos_Lamprou/SSL_FC_matrix_data/Python/dparsf_cc400'
-       
-data = np.load(os.path.join(path,'ABIDE_train_list.npz'))
-train_data1 = []
-for key in data:
-    train_data1.append(data[key])
-
-data = np.load(os.path.join(path,'ABIDE_test_list.npz'))
-test_data = []
-for key in data:
-    test_data.append(data[key])
-
-y_train1 = np.load(os.path.join(path,'ABIDE_class_train.npy'))    
-y_test = np.load(os.path.join(path,'ABIDE_class_test.npy'))
- 
-device = torch.device("cuda:3") if torch.cuda.is_available() else torch.device("cpu")
-batch_size = 128
-shuffle = True
-epochs = 100
-lr = 5e-5
-save_models = True
-save_results = True
-
-model_config = {}
-model_config['extractor_type'] = 'cnn'
-model_config['embedding_size'] = 128
-model_config['window_size'] = 16
-model_config['pool_size'] = 4
-
-test_losses = []
-test_aucs = []
-losses_all = []
-val_losses_all = []
-aucs_all = []
-val_aucs_all = []
-for i in range(10):
-    train_data, val_data, y_train, y_val,_,_ = custom_train_test_split(train_data1, y_train1, test_size=0.1, random_state=42+i)
-    train_dataset = ABIDEDataset(train_data, y_train)
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle = shuffle, drop_last=True)
-    val_dataset = ABIDEDataset(val_data, y_val)
-    val_loader = DataLoader(val_dataset, batch_size=batch_size)
-    test_dataset = ABIDEDataset(test_data, y_test)
-    test_loader = DataLoader(test_dataset, batch_size=batch_size)
+def main(config):
+    path = os.path.join(config['path_data'],config['dataset'])
+           
+    data = np.load(os.path.join(path,'ABIDE_train_list.npz'))
+    train_data1 = []
+    for key in data:
+        train_data1.append(data[key])
     
-    encoder_model = SeqenceModel(model_config, 392, 393).to(device)
+    data = np.load(os.path.join(path,'ABIDE_test_list.npz'))
+    test_data = []
+    for key in data:
+        test_data.append(data[key])
     
-    loss_func = nn.BCELoss()
-    optimizer = Adam(encoder_model.parameters(), lr=lr)
-    scheduler = LinearWarmupCosineAnnealingLR(
-        optimizer=optimizer,
-        warmup_epochs=20,
-        max_epochs=epochs)
+    y_train1 = np.load(os.path.join(path,'ABIDE_class_train.npy'))    
+    y_test = np.load(os.path.join(path,'ABIDE_class_test.npy'))
+     
+    device = torch.device(config['device']) if torch.cuda.is_available() else torch.device("cpu")
+    batch_size = config['batch_size']
+    shuffle = config['shuffle']
+    epochs = config['epochs']
+    lr = config['lr']
+    save_models = config['save_models']
+    save_results = config['save_results']   
+    model_config = {}
+    model_config['embedding_size'] = config['model_config']['embedding_size']
+    model_config['window_size'] = config['model_config']['window_size']
+    model_config['pool_size'] = config['model_config']['pool_size']
     
-    min_loss = 1000
-    min_val_loss = 1000
-    max_auc = 0
-    max_val_auc = 0
-    losses = []
-    val_losses = []
-    aucs = []
-    val_aucs = []
-    with tqdm(total=epochs, desc='(T)') as pbar:
-        for epoch in range(1,epochs+1):
-            # Iterate over the data loader
-            total_loss = 0.0
-            total_auc = 0.0
-            total_val_loss = 0.0
-            total_val_auc = 0.0
-            batch_count = 0                          
-            for batch_idx, (batch_data, batch_labels) in enumerate(train_loader):            
-                loss,auc = train(batch_data.to(device), batch_labels.to(device), encoder_model, optimizer, loss_func)
-                val_loss,val_auc = test(encoder_model,val_loader,batch_size,loss_func,device)
-                scheduler.step()
-                total_loss += loss
-                total_auc += auc
-                total_val_loss += val_loss
-                total_val_auc += val_auc
-                batch_count += 1
-                    
-            average_loss = total_loss / batch_count if batch_count > 0 else float('nan')   
-            average_auc = total_auc / batch_count if batch_count > 0 else float('nan') 
-            average_val_loss = total_val_loss / batch_count if batch_count > 0 else float('nan') 
-            average_val_auc = total_val_auc / batch_count if batch_count > 0 else float('nan') 
-            losses.append(average_loss)
-            val_losses.append(average_val_loss)
-            aucs.append(average_auc)
-            val_aucs.append(average_val_auc)
-            pbar.set_postfix({
-                'loss': average_loss, 
-                'auc': average_auc,
-                'val_loss': average_val_loss, 
-                'val_auc': average_val_auc
-            })
-            pbar.update()  
-            if average_loss < min_loss:
-                min_loss = average_loss
-                min_loss_model = encoder_model.state_dict()
-                min_loss_epoch = epoch
-            if average_val_loss < min_val_loss:
-                min_val_loss = average_loss
-                min_val_loss_model = encoder_model.state_dict()
-                min_val_loss_epoch = epoch
-            if average_auc > max_auc:
-                max_auc = average_auc
-                max_auc_model = encoder_model.state_dict()
-                max_auc_epoch = epoch
-            if average_val_auc > max_val_auc:
-                max_val_auc = average_val_auc
-                max_val_auc_model = encoder_model.state_dict()
-                max_val_auc_epoch = epoch
+    test_losses = []
+    test_aucs = []
+    losses_all = []
+    val_losses_all = []
+    aucs_all = []
+    val_aucs_all = []
+    for i in range(10):
+        train_data, val_data, y_train, y_val,_,_ = custom_train_test_split(train_data1, y_train1, test_size=0.1, random_state=42+i)
+        train_dataset = ABIDEDataset(train_data, y_train)
+        train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle = shuffle, drop_last=True)
+        val_dataset = ABIDEDataset(val_data, y_val)
+        val_loader = DataLoader(val_dataset, batch_size=batch_size)
+        test_dataset = ABIDEDataset(test_data, y_test)
+        test_loader = DataLoader(test_dataset, batch_size=batch_size)
+        if 'CC200' in config['dataset']:
+            rois = 200
+        elif 'CC400' in config['dataset']:
+            rois = 392
+        encoder_model = SeqenceModel(model_config, rois, config['max_length']).to(device)
         
-    encoder_model.load_state_dict(min_val_loss_model)
-    test_loss,test_auc = test(encoder_model,test_loader,batch_size,loss_func,device)   
-    test_losses.append(test_loss)
-    test_aucs.append(test_auc)
-    losses_all.append(losses)
-    val_losses_all.append(val_losses)
-    aucs_all.append(aucs)
-    val_aucs_all.append(val_aucs)
-    
-    if save_models:
-        torch.save(min_val_loss_model, os.path.join('models_ABIDE','ABIDE_SL_min_val_loss_model_' + str(i) + '.pth'))
-        torch.save(max_val_auc_model, os.path.join('models_ABIDE','ABIDE_SL_max_val_auc_model_' + str(i) +'.pth'))
-if save_results:        
-    np.save(os.path.join('results_ABIDE','ABIDE_SL_losses.npy'), losses_all)
-    np.save(os.path.join('results_ABIDE','ABIDE_SL_aucs.npy'), aucs_all)
-    np.save(os.path.join('results_ABIDE','ABIDE_SL_Vallosses.npy'), val_losses_all)
-    np.save(os.path.join('results_ABIDE','ABIDE_SL_ValAucs.npy'), val_aucs_all)
-    
-    results = {
-        "test_loss": test_losses,
-        "test_auc": test_aucs
-    }
-    with open(os.path.join('results_ABIDE','ABIDE_SL_results.pkl'), "wb") as pickle_file:
-        pickle.dump(results, pickle_file)
+        loss_func = nn.BCELoss()
+        optimizer = Adam(encoder_model.parameters(), lr=lr)
+        scheduler = LinearWarmupCosineAnnealingLR(
+            optimizer=optimizer,
+            warmup_epochs=20,
+            max_epochs=epochs)
+        
+        min_loss = 1000
+        min_val_loss = 1000
+        max_auc = 0
+        max_val_auc = 0
+        losses = []
+        val_losses = []
+        aucs = []
+        val_aucs = []
+        with tqdm(total=epochs, desc='(T)') as pbar:
+            for epoch in range(1,epochs+1):
+                total_loss = 0.0
+                total_auc = 0.0
+                total_val_loss = 0.0
+                total_val_auc = 0.0
+                batch_count = 0                          
+                for batch_idx, (batch_data, batch_labels) in enumerate(train_loader):            
+                    loss,auc = train(batch_data.to(device), batch_labels.to(device), encoder_model, optimizer, loss_func)
+                    val_loss,val_auc = test(encoder_model,val_loader,batch_size,loss_func,device)
+                    scheduler.step()
+                    total_loss += loss
+                    total_auc += auc
+                    total_val_loss += val_loss
+                    total_val_auc += val_auc
+                    batch_count += 1
+                        
+                average_loss = total_loss / batch_count if batch_count > 0 else float('nan')   
+                average_auc = total_auc / batch_count if batch_count > 0 else float('nan') 
+                average_val_loss = total_val_loss / batch_count if batch_count > 0 else float('nan') 
+                average_val_auc = total_val_auc / batch_count if batch_count > 0 else float('nan') 
+                losses.append(average_loss)
+                val_losses.append(average_val_loss)
+                aucs.append(average_auc)
+                val_aucs.append(average_val_auc)
+                pbar.set_postfix({
+                    'loss': average_loss, 
+                    'auc': average_auc,
+                    'val_loss': average_val_loss, 
+                    'val_auc': average_val_auc
+                })
+                pbar.update()  
+                if average_loss < min_loss:
+                    min_loss = average_loss
+                    min_loss_model = encoder_model.state_dict()
+                    min_loss_epoch = epoch
+                if average_val_loss < min_val_loss:
+                    min_val_loss = average_loss
+                    min_val_loss_model = encoder_model.state_dict()
+                    min_val_loss_epoch = epoch
+                if average_auc > max_auc:
+                    max_auc = average_auc
+                    max_auc_model = encoder_model.state_dict()
+                    max_auc_epoch = epoch
+                if average_val_auc > max_val_auc:
+                    max_val_auc = average_val_auc
+                    max_val_auc_model = encoder_model.state_dict()
+                    max_val_auc_epoch = epoch
+            
+        encoder_model.load_state_dict(min_val_loss_model)
+        test_loss,test_auc = test(encoder_model,test_loader,batch_size,loss_func,device)   
+        test_losses.append(test_loss)
+        test_aucs.append(test_auc)
+        losses_all.append(losses)
+        val_losses_all.append(val_losses)
+        aucs_all.append(aucs)
+        val_aucs_all.append(val_aucs)
+        
+        if save_models:
+            torch.save(min_val_loss_model, os.path.join('models_ABIDE',config['dataset'],'SL','ABIDE_SL_min_val_loss_model_' + str(i) + '.pth'))
+            torch.save(max_val_auc_model, os.path.join('models_ABIDE',config['dataset'],'SL','ABIDE_SL_max_val_auc_model_' + str(i) +'.pth'))
+    if save_results:        
+        np.save(os.path.join('results_ABIDE',config['dataset'],'ABIDE_SL_losses.npy'), losses_all)
+        np.save(os.path.join('results_ABIDE',config['dataset'],'ABIDE_SL_aucs.npy'), aucs_all)
+        np.save(os.path.join('results_ABIDE',config['dataset'],'ABIDE_SL_Vallosses.npy'), val_losses_all)
+        np.save(os.path.join('results_ABIDE',config['dataset'],'ABIDE_SL_ValAucs.npy'), val_aucs_all)
+        
+        results = {
+            "test_loss": test_losses,
+            "test_auc": test_aucs
+        }
+        with open(os.path.join('results_ABIDE','ABIDE_SL_results.pkl'), "wb") as pickle_file:
+            pickle.dump(results, pickle_file)
 
-#if __name__ == '__main__':
-#    main()
+if __name__ == '__main__':
+    config = {}
+    config['dataset'] = 'DPARSF-CC200'
+    config['path_data'] = r'/home/student1/Desktop/Charalampos_Lamprou/SSL_FC_matrix_data/Python'
+    config['max_length'] = 393 #according to the wind_size_max from prepare_train_test_ABIDE
+    config['batch_size'] = 128
+    config['shuffle'] = True
+    config['epochs'] = 100
+    config['lr'] = 5e-5
+    config['model_config'] = {}
+    config['model_config']['embedding_size'] = 128
+    config['model_config']['window_size'] = 16
+    config['model_config']['pool_size'] = 4   
+    config['device'] = "cuda:3"
+    config['save_models'] = True
+    config['save_results'] = True
+    main(config)
 

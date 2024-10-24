@@ -2,7 +2,7 @@ import pickle
 import numpy as np
 import os  
 
-case = 'CPAC-CC200'
+case = 'DPARSF-CC200_same_size'
 
 SL_val_aucs = np.load(os.path.join('results_ABIDE',case,'ABIDE_SL_ValAucs.npy'))
 SL_val_losses = np.load(os.path.join('results_ABIDE',case,'ABIDE_SL_Vallosses.npy'))
@@ -46,8 +46,8 @@ print(f"SSL: mean validation AUC= {np.mean(best_val_aucs_SSL):.2f}, std={np.std(
 print(f"SSL: mean validation Loss={np.mean(best_val_losses_SSL):.2f}, std={np.std(best_val_losses_SSL):.2f}")
 print(f"SSL: mean test       AUC= {np.mean(best_test_aucs_SSL):.2f}, std={np.std(best_test_aucs_SSL):.2f}")
 print(f"SSL: mean test       Loss={np.mean(best_test_losses_SSL):.2f}, std={np.std(best_test_losses_SSL):.2f}")
-#print('')
-#print(f"SL: mean validation AUC= {np.mean(best_val_aucs_SL):.2f}, std={np.std(best_val_aucs_SL):.2f}")
-#print(f"SL: mean validation Loss={np.mean(best_val_losses_SL):.2f}, std={np.std(best_val_losses_SL):.2f}")
-#print(f"SL: mean test       AUC= {np.mean(best_test_aucs_SL):.2f}, std={np.std(best_test_aucs_SL):.2f}")
-#print(f"SL: mean test       Loss={np.mean(best_test_losses_SL):.2f}, std={np.std(best_test_losses_SL):.2f}")
+print('')
+print(f"SL: mean validation AUC= {np.mean(best_val_aucs_SL):.2f}, std={np.std(best_val_aucs_SL):.2f}")
+print(f"SL: mean validation Loss={np.mean(best_val_losses_SL):.2f}, std={np.std(best_val_losses_SL):.2f}")
+print(f"SL: mean test       AUC= {np.mean(best_test_aucs_SL):.2f}, std={np.std(best_test_aucs_SL):.2f}")
+print(f"SL: mean test       Loss={np.mean(best_test_losses_SL):.2f}, std={np.std(best_test_losses_SL):.2f}")

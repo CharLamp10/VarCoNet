@@ -36,13 +36,11 @@ def resample_signal(signal,name):
         ratio = TR/1.5
         new_len = int(np.round(signal.shape[0]*ratio))
         signal = resample(signal,new_len)
-    signal = signal[:142,:]
     return signal
 
-
-wind_size_max = 142
-path_data = r'G:\ABIDE_ADHD_AAL\ABIDEI\cpac_cc400\filt_noglobal\rois_cc400'
-save_path = r'C:\Users\100063082\Desktop\SSL_FC_matrix_data\cpac_cc400_same_size'
+wind_size_max = 393
+path_data = r'G:\ABIDE_ADHD_AAL\ABIDEI\cpac_cc200\filt_noglobal\rois_cc200'
+save_path = r'C:\Users\100063082\Desktop\SSL_FC_matrix_data\CPAC-CC200'
 path_phenotypic = r'G:\ABIDE_ADHD_AAL\ABIDEI\Phenotypic_V1_0b.csv'
 
 data_dir = os.listdir(path_data)
@@ -76,12 +74,12 @@ for data in data_dir:
         temp = line[:-1].split('\t')
         feature.append([float(x) for x in temp])
     feature = np.array(feature)
-    #if feature.shape[0] <= 295 and feature.shape[0] > 100:
-    if not np.any(np.all(feature == 0, axis=0)):
-        classes.append(group[pos_id[0]])
-        feature = resample_signal(feature, data)          
-        Times.append(feature)
-        names.append(data)
+    if feature.shape[0] <= 295 and feature.shape[0] > 100:
+        if not np.any(np.all(feature == 0, axis=0)):
+            classes.append(group[pos_id[0]])
+            feature = resample_signal(feature, data)          
+            Times.append(feature)
+            names.append(data)
 
 ASD_inds = np.where(np.array(classes) == 1)[0]
 NC_inds = np.where(np.array(classes) == 0)[0]              
