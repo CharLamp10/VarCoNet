@@ -4,12 +4,12 @@ import os
 import plotly.graph_objects as go
 
 losses = []
-with open(os.path.join('results', 'losses.txt'), 'r') as f:
+with open(os.path.join('results', 'losses_tau_0.05_0.005.txt'), 'r') as f:
     for line in f:
         losses.append(float(line.strip()))
 losses = np.array(losses)
         
-with open(os.path.join('results', 'test_results.pkl'), 'rb') as f:
+with open(os.path.join('results', 'test_results_tau_0.05_0.005.pkl'), 'rb') as f:
     test_result = pickle.load(f)
 
 test_result = test_result[:-1]
@@ -43,14 +43,18 @@ mean_acc1 = np.array(mean_acc1)
 std_acc1 = np.array(std_acc1)
 mean_acc2 = np.array(mean_acc2)
 std_acc2 = np.array(std_acc2)
-mean_acc3 = np.array(mean_acc3)
-std_acc3 = np.array(std_acc3)
-mean_acc4 = np.array(mean_acc4)
-std_acc4 = np.array(std_acc4)
-mean_acc5 = np.array(mean_acc5)
-std_acc5 = np.array(std_acc5)
-mean_acc6 = np.array(mean_acc6)
-std_acc6 = np.array(std_acc6)
+mean_acc3 = np.array(mean_acc4)
+std_acc3 = np.array(std_acc4)
+mean_acc4 = np.array(mean_acc6)
+std_acc4 = np.array(std_acc6)
+#mean_acc5 = np.array(mean_acc5)
+#std_acc5 = np.array(std_acc5)
+#mean_acc6 = np.array(mean_acc6)
+#std_acc6 = np.array(std_acc6)
+mean_acc5 = [None]
+std_acc5 = [None]
+mean_acc6 = [None]
+std_acc6 = [None]
 
 x = np.arange(1, len(test_result)+1)
 
@@ -62,10 +66,18 @@ line_colors = ['rgba(255,0,0,1)',     # Red
                'rgba(255,0,255,1)',   # Magenta
                'rgba(0,255,255,1)',   # Cyan
                'rgba(165,42,42,1)']   # Brown 
+               
+#line_colors = ['rgba(255,0,0,1)',     # Red
+#               'rgba(0,0,255,1)',     # Blue
+#               'rgba(0,255,0,1)',     # Green
+#               'rgba(255,0,255,1)',   # Magenta
+#               'rgba(0,255,255,1)',   # Cyan
+#               'rgba(165,42,42,1)']   # Brown 
 
-lengths = [56, 84, 112, 140, 180, 300]
+#lengths = [56, 84, 112, 140, 180, 300]
+lengths = [56, 84, 140, 300, 600, 1200]
 # Adding all accuracy lines and their shaded areas
-for i in range(1, 7):
+for i in range(1, 7): #7
     mean_acc = eval(f'mean_acc{i}')
     std_acc = eval(f'std_acc{i}')
     line_color = line_colors[i - 1]
@@ -79,17 +91,19 @@ for i in range(1, 7):
     ))
 
     # Adding the shaded area for standard deviation
-    fig.add_trace(go.Scatter(
-        x=np.concatenate([x, x[::-1]]),  # x values for the area
-        y=np.concatenate([mean_acc + std_acc, (mean_acc - std_acc)[::-1]]),  # Upper and lower bounds
-        fill='toself',
-        fillcolor=line_color.replace('1)', '0.2)'),  # Fill color matching the line color with transparency
-        line=dict(color='rgba(255,255,255,0)'),
-        name=f'±1 Std Dev {i}',
-        showlegend=False,
-    ))
+    if not None in mean_acc:
+        fig.add_trace(go.Scatter(
+            x=np.concatenate([x, x[::-1]]),  # x values for the area
+            y=np.concatenate([mean_acc + std_acc, (mean_acc - std_acc)[::-1]]),  # Upper and lower bounds
+            fill='toself',
+            fillcolor=line_color.replace('1)', '0.2)'),  # Fill color matching the line color with transparency
+            line=dict(color='rgba(255,255,255,0)'),
+            name=f'±1 Std Dev {i}',
+            showlegend=False,
+        ))
 
-horizontal_lines = [0.14, 0.20, 0.26, 0.31, 0.37, 0.50]
+#horizontal_lines = [0.14, 0.20, 0.26, 0.31, 0.37, 0.50]
+horizontal_lines = [0.14, 0.20, 0.31, 0.50, 0.61, 0.69]
 
 for i, y in enumerate(horizontal_lines):
     color = line_colors[i]  # Get the corresponding color for the line
@@ -112,13 +126,18 @@ fig.update_layout(
         tickvals=x,  # Keeping the same tick positions
         ticktext=[str(label) for label in custom_xticklabels],  # Custom tick labels
     ),
+    yaxis=dict(
+        tickvals=[0.1,0.2,0.3,0.4,0.5,0.6,0.7],  # Keeping the same tick positions
+        ticktext=[str(label) for label in [0.1,0.2,0.3,0.4,0.5,0.6,0.7]],
+        range=[0, 0.7]
+    ),
     xaxis_title_font=dict(size=20),  # Change x-axis title font size
     yaxis_title_font=dict(size=20),  # Change y-axis title font size
     legend=dict(
         font=dict(size=16)  # Change the legend font size
     )
 )
-fig.write_image('subject_fingerprinting_rates_300.png',scale=8, engine = "orca")
+fig.write_image('subject_fingerprinting_rates_final.png',scale=8, engine = "orca")
 
 
 
@@ -143,4 +162,4 @@ fig.update_layout(
 )
 
 # Save the figure as a high-resolution image (optional)
-fig.write_image('task1_training_loss_300.png', scale=8, engine = "orca")
+fig.write_image('task1_training_loss_final.png', scale=8, engine = "orca")

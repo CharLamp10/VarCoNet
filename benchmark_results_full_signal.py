@@ -90,14 +90,14 @@ for name in test_names:
 
 features1 = []
 for data in Time1:
-    corr = np.corrcoef(data.T)
+    corr = np.corrcoef(data[:600,].T)
     upper_triangular = np.triu(corr,k=1)
     features1.append(upper_triangular[np.triu_indices_from(corr)])
 features1 = np.array(features1)
 
 features2 = []
 for data in Time2:
-    corr = np.corrcoef(data.T)
+    corr = np.corrcoef(data[:600,:].T)
     upper_triangular = np.triu(corr,k=1)
     features2.append(upper_triangular[np.triu_indices_from(corr)])
 features2 = np.array(features2)
