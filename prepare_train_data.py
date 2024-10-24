@@ -111,7 +111,7 @@ for name in rand_subjects:
                     
 
 wind_size_max = 300
-windowsize =[56,84,112,140,180,220,260,wind_size_max]
+windowsize =[56,84,112,140,180,wind_size_max]
 """ S-A"""
 strite = int(wind_size_max/2)
 random_list_SA = []
@@ -131,26 +131,9 @@ for x in Time:
             feature.append(temp)
         all_feature.append(feature)
     random_list_SA.append(all_feature)
-#windowsize = 140
-#strite = int(windowsize/2)
-#random_list_SA = []
-#t = 20
-#for x in Time:
-#    all_feature = []
-#    for i in range(t):
-#        time = x.shape[0]
-#        k = strite * i
-#        if k + windowsize >= (time - 1):
-#            k = randint(1, time - windowsize - 2)
-#        feature_i = np.zeros((wind_size_max,384))   
-#        feature_i[0:windowsize,:] = x[k:k + windowsize,:]
-#        temp = feature_i.astype(np.float32)
-#        all_feature.append(temp)
-#    random_list_SA.append(all_feature)
+
 
 """M-A"""
-#strite = 200
-#windowsize =[56,84,112,140,wind_size_max]
 random_list_MA = []
 window_point_Time = []
 t = 15
@@ -184,9 +167,9 @@ for j,x in enumerate(Time):
     random_list_MA.append(all_feature)
         
     
-np.savez(os.path.join(path_save,'random_list_SA_300_dense'),*random_list_SA)
-np.savez(os.path.join(path_save,'random_list_MA_300_dense'),*random_list_MA)
+np.savez(os.path.join(path_save,'random_list_SA'),*random_list_SA)
+np.savez(os.path.join(path_save,'random_list_MA'),*random_list_MA)
 
-with open(os.path.join(path_save,'names_300_dense.txt'), 'w') as f:
+with open(os.path.join(path_save,'names_dense.txt'), 'w') as f:
     for item in names:
         f.write("%s\n" % item)

@@ -38,10 +38,9 @@ def resample_signal(signal,name):
         signal = resample(signal,new_len)
     return signal
 
-
 wind_size_max = 393
-path_data = r'G:\ABIDE_ADHD_AAL\ABIDEI\dparsf_cc400\filt_noglobal\rois_cc400'
-save_path = r'C:\Users\100063082\Desktop\SSL_FC_matrix_data\dparsf_cc400_all'
+path_data = r'G:\ABIDE_ADHD_AAL\ABIDEI\cpac_cc200\filt_noglobal\rois_cc200'
+save_path = r'C:\Users\100063082\Desktop\SSL_FC_matrix_data\CPAC-CC200'
 path_phenotypic = r'G:\ABIDE_ADHD_AAL\ABIDEI\Phenotypic_V1_0b.csv'
 
 data_dir = os.listdir(path_data)
