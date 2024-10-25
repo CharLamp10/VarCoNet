@@ -9,13 +9,13 @@ Created on Thu Oct  3 11:23:24 2024
 import numpy as np
 import os
 
-path = r'/home/student1/Desktop/Charalampos_Lamprou/SSL_FC_matrix_data/Python'
-data = np.load(os.path.join(path,'random_list_test1_300.npz'))
+path = r'C:\Users\100063082\Desktop\SSL_FC_matrix_data'
+data = np.load(os.path.join(path,'random_list_test1.npz'))
 test_data1 = []
 for key in data:
     test_data1.append(data[key])
 
-data = np.load(os.path.join(path,'random_list_test2_300.npz'))
+data = np.load(os.path.join(path,'random_list_test2.npz'))
 test_data2 = []
 for key in data:
     test_data2.append(data[key])
@@ -88,3 +88,8 @@ mean_acc5 = np.mean(acc5)
 std_acc5 = np.std(acc5)
 mean_acc6 = np.mean(acc6)
 std_acc6 = np.std(acc6)
+
+np.save('pcc_acc_l_56.npy',acc1)
+np.save('pcc_acc_l_84.npy',acc2)
+np.save('pcc_acc_l_140.npy',acc4)
+np.save('pcc_acc_l_300.npy',acc6)

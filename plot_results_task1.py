@@ -2,6 +2,9 @@ import pickle
 import numpy as np
 import os
 import plotly.graph_objects as go
+import seaborn as sns
+import matplotlib.pyplot as plt
+import pandas as pd
 
 losses = []
 with open(os.path.join('results', 'losses_tau_0.05_0.005.txt'), 'r') as f:
@@ -21,36 +24,26 @@ mean_acc3 = []
 std_acc3 = []
 mean_acc4 = []
 std_acc4 = []
-mean_acc5 = []
-std_acc5 = []
-mean_acc6 = []
-std_acc6 = []
+
 for test in test_result:
     mean_acc1.append(test[1])
     std_acc1.append(test[2])
     mean_acc2.append(test[3])
     std_acc2.append(test[4])
-    mean_acc3.append(test[5])
-    std_acc3.append(test[6])
-    mean_acc4.append(test[7])
-    std_acc4.append(test[8])
-    mean_acc5.append(test[9])
-    std_acc5.append(test[10])
-    mean_acc6.append(test[11])
-    std_acc6.append(test[12])
-    
+    mean_acc3.append(test[7])
+    std_acc3.append(test[8])
+    mean_acc4.append(test[11])
+    std_acc4.append(test[12])
+
 mean_acc1 = np.array(mean_acc1)
 std_acc1 = np.array(std_acc1)
 mean_acc2 = np.array(mean_acc2)
 std_acc2 = np.array(std_acc2)
-mean_acc3 = np.array(mean_acc4)
-std_acc3 = np.array(std_acc4)
-mean_acc4 = np.array(mean_acc6)
-std_acc4 = np.array(std_acc6)
-#mean_acc5 = np.array(mean_acc5)
-#std_acc5 = np.array(std_acc5)
-#mean_acc6 = np.array(mean_acc6)
-#std_acc6 = np.array(std_acc6)
+mean_acc3 = np.array(mean_acc3)
+std_acc3 = np.array(std_acc3)
+mean_acc4 = np.array(mean_acc4)
+std_acc4 = np.array(std_acc4)
+
 mean_acc5 = [None]
 std_acc5 = [None]
 mean_acc6 = [None]
@@ -67,14 +60,7 @@ line_colors = ['rgba(255,0,0,1)',     # Red
                'rgba(0,255,255,1)',   # Cyan
                'rgba(165,42,42,1)']   # Brown 
                
-#line_colors = ['rgba(255,0,0,1)',     # Red
-#               'rgba(0,0,255,1)',     # Blue
-#               'rgba(0,255,0,1)',     # Green
-#               'rgba(255,0,255,1)',   # Magenta
-#               'rgba(0,255,255,1)',   # Cyan
-#               'rgba(165,42,42,1)']   # Brown 
 
-#lengths = [56, 84, 112, 140, 180, 300]
 lengths = [56, 84, 140, 300, 600, 1200]
 # Adding all accuracy lines and their shaded areas
 for i in range(1, 7): #7
@@ -162,4 +148,55 @@ fig.update_layout(
 )
 
 # Save the figure as a high-resolution image (optional)
-fig.write_image('task1_training_loss_final.png', scale=8, engine = "orca")
+fig.write_image('task1_training_loss.png', scale=8, engine = "orca")
+
+
+accs1_pcc = np.load('pcc_acc_l_56.npy')
+accs2_pcc = np.load('pcc_acc_l_84.npy')
+accs3_pcc = np.load('pcc_acc_l_140.npy')
+accs4_pcc = np.load('pcc_acc_l_300.npy')
+
+test_result = test_result[10][0]
+accs1 = test_result[np.arange(0,90,6)]
+accs2 = test_result[np.arange(1,90,6)]
+accs3 = test_result[np.arange(3,90,6)]
+accs4 = test_result[np.arange(5,90,6)]
+
+accs = [accs1,accs2,accs3,accs4]
+accs_pcc = [accs1_pcc,accs2_pcc,accs3_pcc,accs4_pcc]
+
+data = []
+labels = []
+groups = []
+
+group = ['l=56','l=84','l=140','l=300']
+for i in range(len(group)):
+    data.extend(accs_pcc[i])
+    labels.extend(['PCC'] * 15)
+    groups.extend([group[i]] * 15)
+    
+    data.extend(accs[i])
+    labels.extend(['VarConnectNet'] * 15)
+    groups.extend([group[i]] * 15)
+    
+
+df = pd.DataFrame({'Value': data, 'Method': labels, 'Group': groups})
+
+plt.figure(figsize=(10, 6))
+sns.set(style="whitegrid")
+
+ax = sns.boxplot(x='Group', y='Value', hue='Method', data=df, palette='Set2')
+
+for i in range(0, len(group)-1, 2):  # Iterate every other group
+    ax.axvspan(i - 0.5, i + 0.5, color='lightgray', alpha=0.5)
+
+plt.ylabel('Accuracy', fontsize=25)
+plt.xlabel('')
+
+plt.legend(loc='lower right', fontsize = 20)
+plt.xticks(rotation=0, fontsize=20)
+plt.yticks(fontsize=16)
+plt.tight_layout()
+
+plt.savefig('comparison_boxplot.png', dpi=600, bbox_inches='tight')
+plt.show()

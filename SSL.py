@@ -372,7 +372,7 @@ if __name__ == '__main__':
     config['epochs'] = 300
     config['warm_up_epochs'] = 100
     config['lr'] = 5e-3
-    config['eval_epochs'] = [1,5,10,20,30,40,50,60,70,80,90,100,125,150,175,200,225,250,275,300]
+    config['eval_epochs'] = [1,5,10,20,50,75,100,125,150,175,200,225,250,275,300]
     config['model_config'] = {}
     config['model_config']['embedding_size'] = 128
     config['model_config']['window_size'] = 32

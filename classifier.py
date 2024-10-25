@@ -20,7 +20,7 @@ class MLP(nn.Module):
 
 
 class LREvaluator(BaseEvaluator):
-    def __init__(self, num_epochs: int = 200, learning_rate: float = 0.0005, test_interval: int = 1):     #10
+    def __init__(self, num_epochs: int = 200, learning_rate: float = 0.0005, test_interval: int = 1):
         self.num_epochs = num_epochs
         self.learning_rate = learning_rate
         self.test_interval = test_interval
