@@ -310,7 +310,7 @@ def main(config):
             for batch_idx, (sample_inds_sa, sample_inds_ma) in enumerate(zip(SA_loader.batch_sampler, MA_loader.batch_sampler)):
                 sample_inds_sa = removeDuplicates(names,sample_inds_sa)
                 batch_list = [SA[i] for i in sample_inds_sa]
-                batch_loader = DataLoader(SA, batch_size=len(batch_list))
+                batch_loader = DataLoader(batch_list, batch_size=len(batch_list))
                 batch_data = next(iter(batch_loader))
                 random_inds1,random_inds2,random_inds = generate_random_numbers(len(batch_list),0,batch_data.shape[1]-1,0,batch_data.shape[2]-1)
                 batch_data1_sa = batch_data[np.arange(len(batch_list)), random_inds, random_inds1]
@@ -318,7 +318,7 @@ def main(config):
                 
                 sample_inds_ma = removeDuplicates(names,sample_inds_ma)
                 batch_list = [MA[i] for i in sample_inds_ma]
-                batch_loader = DataLoader(MA, batch_size=len(batch_list))
+                batch_loader = DataLoader(batch_list, batch_size=len(batch_list))
                 batch_data = next(iter(batch_loader))
                 random_inds1,random_inds2 = generate_random_numbers_with_distance(len(batch_list), 6, 15-1)
                 batch_data1_ma = batch_data[np.arange(len(batch_list)), random_inds1]

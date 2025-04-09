@@ -296,24 +296,22 @@ def main(config):
                 batch_count = 0                
                         
                 for batch_idx, (sample_inds_sa, sample_inds_ma) in enumerate(zip(SA_loader.batch_sampler, MA_loader.batch_sampler)):
-                    batch_list = [SA[i] for i in sample_inds_sa]
-                    batch_loader = DataLoader(SA, batch_size=len(batch_list))
+                    batch_loader = DataLoader(SA, batch_size=len(sample_inds_sa))
                     batch_data = next(iter(batch_loader))
                     all_zeros = (batch_data[:,:,:,0] == 0).all(dim=-1)
                     non_zeros = np.zeros((batch_data.shape[0],batch_data.shape[1]))
                     for j in range(batch_data.shape[0]):
                         for n in range(batch_data.shape[1]):
                             non_zeros[j,n] = torch.min(torch.where(all_zeros[j,n,:])[0])-1
-                    random_inds1,random_inds2,random_inds = generate_random_numbers(len(batch_list),0,batch_data.shape[1]-1,non_zeros)
-                    batch_data1_sa = batch_data[np.arange(len(batch_list)), random_inds, random_inds1]
-                    batch_data2_sa = batch_data[np.arange(len(batch_list)), random_inds, random_inds2]
+                    random_inds1,random_inds2,random_inds = generate_random_numbers(len(sample_inds_sa),0,batch_data.shape[1]-1,non_zeros)
+                    batch_data1_sa = batch_data[np.arange(len(sample_inds_sa)), random_inds, random_inds1]
+                    batch_data2_sa = batch_data[np.arange(len(sample_inds_sa)), random_inds, random_inds2]
                     
-                    batch_list = [MA[i] for i in sample_inds_ma]
-                    batch_loader = DataLoader(MA, batch_size=len(batch_list))
+                    batch_loader = DataLoader(MA, batch_size=len(sample_inds_ma))
                     batch_data = next(iter(batch_loader))
-                    random_inds1,random_inds2 = generate_random_numbers_with_distance(len(batch_list), 5, 8-1)
-                    batch_data1_ma = batch_data[np.arange(len(batch_list)), random_inds1]
-                    batch_data2_ma = batch_data[np.arange(len(batch_list)), random_inds2]
+                    random_inds1,random_inds2 = generate_random_numbers_with_distance(len(sample_inds_ma), 5, 8-1)
+                    batch_data1_ma = batch_data[np.arange(len(sample_inds_ma)), random_inds1]
+                    batch_data2_ma = batch_data[np.arange(len(sample_inds_ma)), random_inds2]
                     loss,input_dim = train(batch_data1_sa.to(device), batch_data2_sa.to(device),
                                            batch_data1_ma.to(device), batch_data2_ma.to(device),
                                            encoder_model, contrast_model, optimizer)

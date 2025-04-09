@@ -226,48 +226,42 @@ def main(config):
             for epoch in range(1,epochs+1):
                 total_loss = 0.0
                 total_auc = 0.0
-                total_val_loss = 0.0
-                total_val_auc = 0.0
                 batch_count = 0                          
                 for batch_idx, (batch_data, batch_labels) in enumerate(train_loader):            
                     loss,auc = train(batch_data.to(device), batch_labels.to(device), encoder_model, optimizer, loss_func)
-                    val_loss,val_auc = test(encoder_model,val_loader,batch_size,loss_func,device)
                     scheduler.step()
                     total_loss += loss
                     total_auc += auc
-                    total_val_loss += val_loss
-                    total_val_auc += val_auc
                     batch_count += 1
+                val_loss,val_auc = test(encoder_model,val_loader,batch_size,loss_func,device)
                         
                 average_loss = total_loss / batch_count if batch_count > 0 else float('nan')   
-                average_auc = total_auc / batch_count if batch_count > 0 else float('nan') 
-                average_val_loss = total_val_loss / batch_count if batch_count > 0 else float('nan') 
-                average_val_auc = total_val_auc / batch_count if batch_count > 0 else float('nan') 
+                average_auc = total_auc / batch_count if batch_count > 0 else float('nan')  
                 losses.append(average_loss)
-                val_losses.append(average_val_loss)
+                val_losses.append(val_loss)
                 aucs.append(average_auc)
-                val_aucs.append(average_val_auc)
+                val_aucs.append(val_auc)
                 pbar.set_postfix({
                     'loss': average_loss, 
                     'auc': average_auc,
-                    'val_loss': average_val_loss, 
-                    'val_auc': average_val_auc
+                    'val_loss': val_loss, 
+                    'val_auc': val_auc
                 })
                 pbar.update()  
                 if average_loss < min_loss:
                     min_loss = average_loss
                     min_loss_model = encoder_model.state_dict()
                     min_loss_epoch = epoch
-                if average_val_loss < min_val_loss:
-                    min_val_loss = average_loss
+                if val_loss < min_val_loss:
+                    min_val_loss = val_loss
                     min_val_loss_model = encoder_model.state_dict()
                     min_val_loss_epoch = epoch
                 if average_auc > max_auc:
                     max_auc = average_auc
                     max_auc_model = encoder_model.state_dict()
                     max_auc_epoch = epoch
-                if average_val_auc > max_val_auc:
-                    max_val_auc = average_val_auc
+                if val_auc > max_val_auc:
+                    max_val_auc = val_auc
                     max_val_auc_model = encoder_model.state_dict()
                     max_val_auc_epoch = epoch
             
