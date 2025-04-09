@@ -123,7 +123,7 @@ fig.update_layout(
         font=dict(size=16)  # Change the legend font size
     )
 )
-fig.write_image('subject_fingerprinting_rates_final.png',scale=8, engine = "orca")
+#fig.write_image('subject_fingerprinting_rates_final.png',scale=8, engine = "orca")
 
 
 
@@ -148,7 +148,7 @@ fig.update_layout(
 )
 
 # Save the figure as a high-resolution image (optional)
-fig.write_image('task1_training_loss.png', scale=8, engine = "orca")
+#fig.write_image('task1_training_loss.png', scale=8, engine = "orca")
 
 
 accs1_pcc = np.load('pcc_acc_l_56.npy')
@@ -176,7 +176,7 @@ for i in range(len(group)):
     groups.extend([group[i]] * 15)
     
     data.extend(accs[i])
-    labels.extend(['VarConnectNet'] * 15)
+    labels.extend(['VarCoNet'] * 15)
     groups.extend([group[i]] * 15)
     
 
@@ -199,4 +199,44 @@ plt.yticks(fontsize=16)
 plt.tight_layout()
 
 plt.savefig('comparison_boxplot.png', dpi=600, bbox_inches='tight')
+plt.show()
+
+
+
+data = []
+labels = []
+groups = []
+
+group = ['T=40 s','T=60 s','T=100 s','T=216 s']
+for i in range(len(group)):
+    data.extend(accs_pcc[i])
+    labels.extend(['PCC'] * 15)
+    groups.extend([group[i]] * 15)
+    
+    data.extend(accs[i])
+    labels.extend(['VarCoNet'] * 15)
+    groups.extend([group[i]] * 15)
+    
+
+df = pd.DataFrame({'Value': data, 'Method': labels, 'Group': groups})
+
+rgb_color = (240/255, 238/255, 231/255)
+fig = plt.figure(figsize=(10, 6))
+fig.patch.set_facecolor(rgb_color)
+sns.set(style="whitegrid")
+
+ax = sns.boxplot(x='Group', y='Value', hue='Method', data=df, palette='Set2')
+
+for i in range(0, len(group)-1, 2):
+    ax.axvspan(i - 0.5, i + 0.5, color='lightgray', alpha=0.5)
+
+plt.ylabel('Accuracy', fontsize=25)
+plt.xlabel('')
+
+plt.legend(loc='lower right', fontsize=20)
+plt.xticks(rotation=0, fontsize=20)
+plt.yticks(fontsize=16)
+plt.tight_layout()
+
+plt.savefig('comparison_boxplot_background.png', dpi=600, bbox_inches='tight')
 plt.show()

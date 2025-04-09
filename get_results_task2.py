@@ -1,8 +1,9 @@
 import pickle
 import numpy as np
 import os  
+from scipy.stats import ttest_ind
 
-case = 'DPARSF-CC200_same_size'
+case = 'DPARSF-CC400'
 
 SL_val_aucs = np.load(os.path.join('results_ABIDE',case,'ABIDE_SL_ValAucs.npy'))
 SL_val_losses = np.load(os.path.join('results_ABIDE',case,'ABIDE_SL_Vallosses.npy'))
@@ -41,6 +42,11 @@ best_val_aucs_SL = SL_val_aucs[np.arange(10),min_positions_SL]
 best_val_losses_SL = SL_val_losses[np.arange(10),min_positions_SL]
 best_test_aucs_SL = np.array(test_result_SL['test_auc'])
 best_test_losses_SL = np.array(test_result_SL['test_loss'])
+
+p_val_aucs = ttest_ind(best_val_aucs_SSL,best_val_aucs_SL)[1]
+p_val_losses = ttest_ind(best_val_losses_SSL,best_val_losses_SL)[1]
+p_test_aucs = ttest_ind(best_test_aucs_SSL,best_test_aucs_SL)[1]
+p_test_losses = ttest_ind(best_test_losses_SSL,best_test_losses_SL)[1]
 
 print(f"SSL: mean validation AUC= {np.mean(best_val_aucs_SSL):.2f}, std={np.std(best_val_aucs_SSL):.2f}")
 print(f"SSL: mean validation Loss={np.mean(best_val_losses_SSL):.2f}, std={np.std(best_val_losses_SSL):.2f}")
